@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增肌管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-blue': '#00f3ff',
+                        'neon-purple': '#bc13fe',
+                        'neon-green': '#0aff0a',
+                        'dark-bg': '#0a0a0f',
+                        'card-bg': '#15151f',
+                        'accent-bg': '#1f1f2e'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'float': 'float 3s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px #00f3ff, 0 0 10px #00f3ff' },
+                            '100%': { boxShadow: '0 0 20px #00f3ff, 0 0 30px #00f3ff' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+        }
+        
+        .glass-panel {
+            background: rgba(21, 21, 31, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .exercise-card {
+            transition: all 0.3s ease;
+        }
+        
+        .exercise-card:hover {
+            transform: translateX(5px);
+            border-left: 3px solid #00f3ff;
+        }
+        
+        .checkbox-custom:checked + div {
+            background: linear-gradient(135deg, #00f3ff, #bc13fe);
+            border-color: transparent;
+        }
+        
+        .checkbox-custom:checked + div i {
+            opacity: 1;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(21,21,31,0.9) 0%, rgba(31,31,46,0.9) 100%);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-gray-800">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-neon-blue to-neon-purple flex items-center justify-center animate-pulse-slow">
+                    <i class="fas fa-dumbbell text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white neon-text">Lean Bulk Pro</h1>
+                    <p class="text-xs text-gray-400">干净增肌追踪系统</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn px-4 py-2 rounded-lg bg-neon-blue/20 text-neon-blue border border-neon-blue/30 transition-all hover:bg-neon-blue/30">
+                    <i class="fas fa-chart-line mr-2"></i>概览
+                </button>
+                <button onclick="switchTab('workout')" id="nav-workout" class="nav-btn px-4 py-2 rounded-lg text-gray-400 hover:text-white transition-all">
+                    <i class="fas fa-dumbbell mr-2"></i>训练
+                </button>
+                <button onclick="switchTab('nutrition')" id="nav-nutrition" class="nav-btn px-4 py-2 rounded-lg text-gray-400 hover:text-white transition-all">
+                    <i class="fas fa-utensils mr-2"></i>营养
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 pt-24 space-y-6">
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="tab-content animate-slide-up">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card rounded-2xl p-4 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-neon-blue/10 rounded-full blur-2xl group-hover:bg-neon-blue/20 transition-all"></div>
+                    <p class="text-gray-400 text-sm mb-1">当前体重</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold text-white" id="current-weight">61.0</span>
+                        <span class="text-sm text-gray-400 mb-1">kg</span>
+                    </div>
+                    <div class="mt-2 text-xs text-neon-green flex items-center gap-1">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>目标: 65kg (+4kg)</span>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-2xl p-4 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-neon-purple/10 rounded-full blur-2xl group-hover:bg-neon-purple/20 transition-all"></div>
+                    <p class="text-gray-400 text-sm mb-1">今日热量</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold text-white" id="today-calories">0</span>
+                        <span class="text-sm text-gray-400 mb-1">/ 2450 kcal</span>
+                    </div>
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="calorie-bar" class="h-full bg-gradient-to-r from-neon-purple to-neon-blue transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-2xl p-4 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-neon-green/10 rounded-full blur-2xl group-hover:bg-neon-green/20 transition-all"></div>
+                    <p class="text-gray-400 text-sm mb-1">蛋白质摄入</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold text-white" id="today-protein">0</span>
+                        <span class="text-sm text-gray-400 mb-1">/ 140g</span>
+                    </div>
+                    <div class="w-full bg-gray-700 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="protein-bar" class="h-full bg-neon-green transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-2xl p-4 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all"></div>
+                    <p class="text-gray-400 text-sm mb-1">本周训练</p>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold text-white" id="weekly-workouts">0</span>
+                        <span class="text-sm text-gray-400 mb-1">/ 5 次</span>
+                    </div>
+                    <div class="flex gap-1 mt-2" id="weekly-dots">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-bullseye text-neon-blue"></i>
+                        增肌进度
+                    </h3>
+                    <div class="flex items-center justify-center relative h-48">
+                        <svg class="w-40 h-40 progress-ring">
+                            <circle cx="80" cy="80" r="70" stroke="#1f1f2e" stroke-width="12" fill="none"></circle>
+                            <circle id="progress-circle" cx="80" cy="80" r="70" stroke="url(#gradient)" stroke-width="12" fill="none" 
+                                    stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round" class="progress-ring-circle"></circle>
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#00f3ff" />
+                                    <stop offset="100%" stop-color="#bc13fe" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="absolute text-center">
+                            <span class="text-3xl font-bold text-white" id="progress-percent">0%</span>
+                            <p class="text-xs text-gray-400">已完成</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-center">
+                        <div class="bg-accent-bg rounded-lg p-3">
+                            <p class="text-xs text-gray-400">起始体重</p>
+                            <p class="text-lg font-bold text-white">61.0 kg</p>
+                        </div>
+                        <div class="bg-accent-bg rounded-lg p-3">
+                            <p class="text-xs text-gray-400">目标体重</p>
+                            <p class="text-lg font-bold text-neon-green">65.0 kg</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-calendar-check text-neon-purple"></i>
+                        今日任务
+                    </h3>
+                    <div class="space-y-3" id="daily-tasks">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" class="checkbox-custom hidden" onchange="toggleTask(this)" data-type="meal">
+                            <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all group-hover:border-neon-blue">
+                                <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                            </div>
+                            <span class="text-gray-300 group-hover:text-white transition-colors">早餐: 燕麦+鸡蛋+牛奶</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" class="checkbox-custom hidden" onchange="toggleTask(this)" data-type="workout">
+                            <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all group-hover:border-neon-blue">
+                                <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                            </div>
+                            <span class="text-gray-300 group-hover:text-white transition-colors">完成今日训练计划</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" class="checkbox-custom hidden" onchange="toggleTask(this)" data-type="protein">
+                            <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all group-hover:border-neon-blue">
+                                <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                            </div>
+                            <span class="text-gray-300 group-hover:text-white transition-colors">蛋白质摄入达到140g</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" class="checkbox-custom hidden" onchange="toggleTask(this)" data-type="sleep">
+                            <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all group-hover:border-neon-blue">
+                                <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                            </div>
+                            <span class="text-gray-300 group-hover:text-white transition-colors">23:00前入睡 (7-8小时)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" class="checkbox-custom hidden" onchange="toggleTask(this)" data-type="water">
+                            <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all group-hover:border-neon-blue">
+                                <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                            </div>
+                            <span class="text-gray-300 group-hover:text-white transition-colors">饮水 3L</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weight Input -->
+            <div class="glass-panel rounded-2xl p-6 mt-6">
+                <h3 class="text-lg font-bold text-white mb-4">记录体重</h3>
+                <div class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <label class="block text-sm text-gray-400 mb-2">日期</label>
+                        <input type="date" id="weight-date" class="w-full bg-accent-bg border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-neon-blue focus:outline-none transition-colors">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm text-gray-400 mb-2">体重 (kg)</label>
+                        <input type="number" id="weight-input" step="0.1" placeholder="61.0" class="w-full bg-accent-bg border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-neon-blue focus:outline-none transition-colors">
+                    </div>
+                    <button onclick="addWeight()" class="px-6 py-2 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg text-white font-semibold hover:opacity-90 transition-opacity">
+                        <i class="fas fa-plus mr-2"></i>记录
+                    </button>
+                </div>
+                <div class="mt-4 h-48 bg-accent-bg rounded-lg p-4 relative overflow-hidden">
+                    <canvas id="weightChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Workout Section -->
+        <section id="workout" class="tab-content hidden animate-slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">今日训练</h2>
+                <select id="day-selector" onchange="loadWorkoutDay()" class="bg-accent-bg border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-neon-blue focus:outline-none">
+                    <option value="monday">周一: 胸+三头</option>
+                    <option value="tuesday">周二: 背+二头</option>
+                    <option value="wednesday">周三: 休息/有氧</option>
+                    <option value="thursday">周四: 腿+肩</option>
+                    <option value="friday">周五: 胸+背超级组</option>
+                    <option value="saturday">周六: 手臂+核心</option>
+                    <option value="sunday">周日: 完全休息</option>
+                </select>
+            </div>
+
+            <div id="workout-content" class="space-y-4">
+                <!-- Dynamic content loaded here -->
+            </div>
+
+            <div class="mt-6 glass-panel rounded-2xl p-6">
+                <h3 class="text-lg font-bold text-white mb-4">训练原则提醒</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-accent-bg rounded-lg p-4 border-l-4 border-neon-blue">
+                        <h4 class="font-semibold text-white mb-2">渐进超负荷</h4>
+                        <p class="text-sm text-gray-400">每周增加2.5kg重量或1-2次次数</p>
+                    </div>
+                    <div class="bg-accent-bg rounded-lg p-4 border-l-4 border-neon-purple">
+                        <h4 class="font-semibold text-white mb-2">控制节奏</h4>
+                        <p class="text-sm text-gray-400">离心3秒，向心1秒，顶峰收缩1秒</p>
+                    </div>
+                    <div class="bg-accent-bg rounded-lg p-4 border-l-4 border-neon-green">
+                        <h4 class="font-semibold text-white mb-2">组间休息</h4>
+                        <p class="text-sm text-gray-400">复合动作2-3分钟，孤立动作60-90秒</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nutrition Section -->
+        <section id="nutrition" class="tab-content hidden animate-slide-up">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">营养计算器</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">体重 (kg)</label>
+                            <input type="number" id="calc-weight" value="61" oninput="calculateNutrition()" 
+                                   class="w-full bg-accent-bg border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-neon-blue focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">活动系数</label>
+                            <select id="calc-activity" onchange="calculateNutrition()" class="w-full bg-accent-bg border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-neon-blue focus:outline-none">
+                                <option value="1.375">轻度活动 (每周3-4次训练)</option>
+                                <option value="1.55" selected>中度活动 (每周5次训练)</option>
+                                <option value="1.725">高强度 (每天训练)</option>
+                            </select>
+                        </div>
+                        <div class="bg-accent-bg rounded-lg p-4 mt-4">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-400">基础代谢 (BMR)</span>
+                                <span class="text-white font-semibold" id="bmr-result">1,580 kcal</span>
+                            </div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-gray-400">每日总消耗 (TDEE)</span>
+                                <span class="text-white font-semibold" id="tdee-result">2,170 kcal</span>
+                            </div>
+                            <div class="flex justify-between pt-2 border-t border-gray-700">
+                                <span class="text-neon-green font-semibold">增肌目标热量</span>
+                                <span class="text-neon-green font-bold text-lg" id="bulk-result">2,450 kcal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-4">快速记录</h3>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="quickAddFood('chicken', 165, 31, 0, 3.6)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">鸡胸肉 100g</div>
+                                <div class="text-xs text-gray-400">165 kcal | 31g蛋白</div>
+                            </button>
+                            <button onclick="quickAddFood('rice', 130, 2.7, 28, 0.3)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">米饭 100g</div>
+                                <div class="text-xs text-gray-400">130 kcal | 28g碳水</div>
+                            </button>
+                            <button onclick="quickAddFood('egg', 155, 13, 1.1, 11)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">鸡蛋 2个</div>
+                                <div class="text-xs text-gray-400">155 kcal | 13g蛋白</div>
+                            </button>
+                            <button onclick="quickAddFood('oats', 389, 16.9, 66, 6.9)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">燕麦 100g</div>
+                                <div class="text-xs text-gray-400">389 kcal | 17g蛋白</div>
+                            </button>
+                            <button onclick="quickAddFood('whey', 120, 24, 3, 1)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">蛋白粉 1勺</div>
+                                <div class="text-xs text-gray-400">120 kcal | 24g蛋白</div>
+                            </button>
+                            <button onclick="quickAddFood('banana', 105, 1.3, 27, 0.3)" class="bg-accent-bg hover:bg-neon-blue/20 border border-gray-700 hover:border-neon-blue rounded-lg p-3 text-left transition-all">
+                                <div class="text-white font-semibold">香蕉 1根</div>
+                                <div class="text-xs text-gray-400">105 kcal | 27g碳水</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-2xl p-6">
+                <h3 class="text-lg font-bold text-white mb-4">今日摄入记录</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-400 border-b border-gray-700">
+                                <th class="pb-3">食物</th>
+                                <th class="pb-3">热量</th>
+                                <th class="pb-3">蛋白质</th>
+                                <th class="pb-3">碳水</th>
+                                <th class="pb-3">脂肪</th>
+                                <th class="pb-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="food-log" class="text-sm">
+                            <!-- Dynamic content -->
+                        </tbody>
+                        <tfoot class="border-t border-gray-700 font-semibold">
+                            <tr class="text-white">
+                                <td class="pt-3">总计</td>
+                                <td class="pt-3 text-neon-blue" id="total-calories">0</td>
+                                <td class="pt-3 text-neon-green" id="total-protein">0g</td>
+                                <td class="pt-3 text-yellow-400" id="total-carbs">0g</td>
+                                <td class="pt-3 text-orange-400" id="total-fat">0g</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Meal Plan -->
+            <div class="glass-panel rounded-2xl p-6 mt-6">
+                <h3 class="text-lg font-bold text-white mb-4">参考食谱</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-accent-bg rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-sun text-yellow-400"></i>
+                            <h4 class="font-semibold text-white">早餐</h4>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li class="flex justify-between"><span>燕麦 80g</span><span class="text-gray-500">311 kcal</span></li>
+                            <li class="flex justify-between"><span>鸡蛋 2个</span><span class="text-gray-500">155 kcal</span></li>
+                            <li class="flex justify-between"><span>牛奶 250ml</span><span class="text-gray-500">150 kcal</span></li>
+                            <li class="flex justify-between"><span>香蕉 1根</span><span class="text-gray-500">105 kcal</span></li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-t border-gray-700 text-neon-blue font-semibold text-right">
+                            合计: 721 kcal
+                        </div>
+                    </div>
+
+                    <div class="bg-accent-bg rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-utensils text-orange-400"></i>
+                            <h4 class="font-semibold text-white">午餐</h4>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li class="flex justify-between"><span>米饭 200g</span><span class="text-gray-500">260 kcal</span></li>
+                            <li class="flex justify-between"><span>鸡胸肉 150g</span><span class="text-gray-500">248 kcal</span></li>
+                            <li class="flex justify-between"><span>蔬菜 200g</span><span class="text-gray-500">50 kcal</span></li>
+                            <li class="flex justify-between"><span>橄榄油 10g</span><span class="text-gray-500">90 kcal</span></li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-t border-gray-700 text-neon-blue font-semibold text-right">
+                            合计: 648 kcal
+                        </div>
+                    </div>
+
+                    <div class="bg-accent-bg rounded-lg p-4 border border-gray-700">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i class="fas fa-moon text-neon-purple"></i>
+                            <h4 class="font-semibold text-white">练后/晚餐</h4>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li class="flex justify-between"><span>蛋白粉 1勺</span><span class="text-gray-500">120 kcal</span></li>
+                            <li class="flex justify-between"><span>白面包 2片</span><span class="text-gray-500">160 kcal</span></li>
+                            <li class="flex justify-between"><span>牛肉 150g</span><span class="text-gray-500">250 kcal</span></li>
+                            <li class="flex justify-between"><span>红薯 150g</span><span class="text-gray-500">135 kcal</span></li>
+                        </ul>
+                        <div class="mt-3 pt-3 border-t border-gray-700 text-neon-blue font-semibold text-right">
+                            合计: 665 kcal
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Data Storage
+        let appData = {
+            currentWeight: 61.0,
+            targetWeight: 65.0,
+            dailyLog: [],
+            weightHistory: [
+                { date: '2026-03-01', weight: 61.0 },
+                { date: '2026-03-03', weight: 61.2 },
+                { date: '2026-03-05', weight: 61.1 },
+                { date: '2026-03-07', weight: 61.3 },
+                { date: '2026-03-10', weight: 61.0 }
+            ],
+            weeklyWorkouts: [true, true, false, true, false, false, false], // Mon-Sun
+            tasksCompleted: 0
+        };
+
+        // Workout Plans
+        const workoutPlans = {
+            monday: {
+                title: "周一：胸部 + 三头肌",
+                focus: "推类动作，注重胸肌厚度和三头长头",
+                exercises: [
+                    { name: "杠铃卧推", sets: 4, reps: "6-8", rest: "2-3min", note: "主项，渐进超负荷", completed: false },
+                    { name: "上斜哑铃卧推", sets: 4, reps: "8-10", rest: "2min", note: "上胸发展", completed: false },
+                    { name: "双杠臂屈伸", sets: 3, reps: "8-12", rest: "90s", note: "身体前倾，侧重下胸", completed: false },
+                    { name: "绳索夹胸", sets: 3, reps: "12-15", rest: "60s", note: "顶峰收缩1秒", completed: false },
+                    { name: "窄距卧推", sets: 4, reps: "8-10", rest: "2min", note: "三头肌主项", completed: false },
+                    { name: "绳索下压", sets: 3, reps: "12-15", rest: "60s", note: "三头孤立", completed: false }
+                ]
+            },
+            tuesday: {
+                title: "周二：背部 + 二头肌",
+                focus: "拉类动作，建立背部宽度和厚度",
+                exercises: [
+                    { name: "引体向上/高位下拉", sets: 4, reps: "6-10", rest: "2-3min", note: "背阔肌宽度", completed: false },
+                    { name: "杠铃划船", sets: 4, reps: "8-10", rest: "2min", note: "背部厚度", completed: false },
+                    { name: "单臂哑铃划船", sets: 3, reps: "10-12", rest: "90s", note: "单侧强化", completed: false },
+                    { name: "直臂下压", sets: 3, reps: "12-15", rest: "60s", note: "背阔肌孤立", completed: false },
+                    { name: "杠铃弯举", sets: 4, reps: "8-10", rest: "90s", note: "二头主项", completed: false },
+                    { name: "锤式弯举", sets: 3, reps: "10-12", rest: "60s", note: "肱肌+前臂", completed: false }
+                ]
+            },
+            wednesday: {
+                title: "周三：主动恢复 / 低强度有氧",
+                focus: "促进血液循环，加速恢复",
+                exercises: [
+                    { name: "快走/慢跑", sets: 1, reps: "20-30min", rest: "-", note: "心率120-130", completed: false },
+                    { name: "全身拉伸", sets: 1, reps: "15min", rest: "-", note: "重点：胸、背、腿", completed: false },
+                    { name: "泡沫轴放松", sets: 1, reps: "10min", rest: "-", note: "背部、腿部", completed: false }
+                ]
+            },
+            thursday: {
+                title: "周四：腿部 + 肩部",
+                focus: "下肢力量 + 三角肌全面发展",
+                exercises: [
+                    { name: "杠铃深蹲", sets: 5, reps: "5-8", rest: "3min", note: "主项，注意深度", completed: false },
+                    { name: "罗马尼亚硬拉", sets: 4, reps: "8-10", rest: "2min", note: "腘绳肌+臀", completed: false },
+                    { name: "腿举", sets: 4, reps: "10-12", rest: "2min", note: "股四头肌", completed: false },
+                    { name: "坐姿推举", sets: 4, reps: "8-10", rest: "2min", note: "三角肌前束", completed: false },
+                    { name: "哑铃侧平举", sets: 4, reps: "12-15", rest: "60s", note: "中束，控制节奏", completed: false },
+                    { name: "面拉", sets: 3, reps: "15-20", rest: "60s", note: "后束+肩袖", completed: false }
+                ]
+            },
+            friday: {
+                title: "周五：胸背超级组",
+                focus: "高强度对抗训练，提升代谢压力",
+                exercises: [
+                    { name: "上斜卧推 + 引体向上", sets: 4, reps: "8-10", rest: "2min", note: "超级组，无间歇", completed: false },
+                    { name: "平板哑铃卧推 + 杠铃划船", sets: 4, reps: "10-12", rest: "2min", note: "推-拉对抗", completed: false },
+                    { name: "双杠臂屈伸 + 单臂划船", sets: 3, reps: "10-12", rest: "90s", note: "力竭组", completed: false },
+                    { name: "俯卧撑 + 反向划船", sets: 3, reps: "力竭", rest: "60s", note: "收尾，榨干余力", completed: false }
+                ]
+            },
+            saturday: {
+                title: "周六：手臂 + 核心",
+                focus: "手臂专项，雕塑线条",
+                exercises: [
+                    { name: "杠铃弯举", sets: 4, reps: "8-10", rest: "90s", note: "二头", completed: false },
+                    { name: "窄距卧推", sets: 4, reps: "8-10", rest: "90s", note: "三头", completed: false },
+                    { name: "牧师凳弯举", sets: 3, reps: "10-12", rest: "60s", note: "二头孤立", completed: false },
+                    { name: "仰卧臂屈伸", sets: 3, reps: "10-12", rest: "60s", note: "三头长头", completed: false },
+                    { name: "悬垂举腿", sets: 4, reps: "10-15", rest: "60s", note: "下腹", completed: false },
+                    { name: "平板支撑", sets: 3, reps: "45-60s", rest: "60s", note: "核心稳定", completed: false }
+                ]
+            },
+            sunday: {
+                title: "周日：完全休息",
+                focus: "肌肉生长发生在休息时",
+                exercises: [
+                    { name: "彻底休息", sets: "-", reps: "-", rest: "-", note: "睡眠8小时，高蛋白饮食", completed: false },
+                    { name: "轻度活动", sets: "-", reps: "可选", rest: "-", note: "散步、阅读、冥想", completed: false }
+                ]
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('weight-date').valueAsDate = new Date();
+            calculateNutrition();
+            loadWorkoutDay();
+            updateDashboard();
+            drawWeightChart();
+            
+            // Set today's workout based on day of week
+            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const today = days[new Date().getDay()];
+            document.getElementById('day-selector').value = today;
+            loadWorkoutDay();
+        });
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-neon-blue/20', 'text-neon-blue', 'border', 'border-neon-blue/30');
+                btn.classList.add('text-gray-400');
+            });
+            
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.remove('text-gray-400');
+            activeBtn.classList.add('bg-neon-blue/20', 'text-neon-blue', 'border', 'border-neon-blue/30');
+        }
+
+        // Dashboard Functions
+        function updateDashboard() {
+            // Update weight display
+            document.getElementById('current-weight').textContent = appData.currentWeight.toFixed(1);
+            
+            // Calculate progress
+            const progress = ((appData.currentWeight - 61) / (65 - 61)) * 100;
+            const clampedProgress = Math.max(0, Math.min(100, progress));
+            document.getElementById('progress-percent').textContent = clampedProgress.toFixed(1) + '%';
+            
+            // Update circle progress
+            const circle = document.getElementById('progress-circle');
+            const circumference = 440;
+            const offset = circumference - (clampedProgress / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            // Update weekly dots
+            const dotsContainer = document.getElementById('weekly-dots');
+            dotsContainer.innerHTML = '';
+            const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+            appData.weeklyWorkouts.forEach((completed, index) => {
+                const dot = document.createElement('div');
+                dot.className = `w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${completed ? 'bg-neon-green text-black' : 'bg-gray-700 text-gray-500'}`;
+                dot.textContent = dayNames[index];
+                dotsContainer.appendChild(dot);
+            });
+            
+            // Update weekly count
+            document.getElementById('weekly-workouts').textContent = appData.weeklyWorkouts.filter(Boolean).length;
+        }
+
+        function addWeight() {
+            const date = document.getElementById('weight-date').value;
+            const weight = parseFloat(document.getElementById('weight-input').value);
+            
+            if (!date || !weight) return;
+            
+            appData.currentWeight = weight;
+            appData.weightHistory.push({ date, weight });
+            appData.weightHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            updateDashboard();
+            drawWeightChart();
+            
+            // Clear input
+            document.getElementById('weight-input').value = '';
+        }
+
+        function drawWeightChart() {
+            const canvas = document.getElementById('weightChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 40;
+            
+            // Clear
+            ctx.clearRect(0, 0, width, height);
+            
+            // Get data
+            const data = appData.weightHistory.slice(-7); // Last 7 entries
+            if (data.length < 2) return;
+            
+            const minWeight = Math.min(...data.map(d => d.weight)) - 0.5;
+            const maxWeight = Math.max(...data.map(d => d.weight)) + 0.5;
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (height - 2 * padding) * i / 4;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // Draw line
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            data.forEach((point, index) => {
+                const x = padding + (width - 2 * padding) * index / (data.length - 1);
+                const y = height - padding - (height - 2 * padding) * (point.weight - minWeight) / (maxWeight - minWeight);
+                
+                if (index === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Draw points
+            data.forEach((point, index) => {
+                const x = padding + (width - 2 * padding) * index / (data.length - 1);
+                const y = height - padding - (height - 2 * padding) * (point.weight - minWeight) / (maxWeight - minWeight);
+                
+                ctx.fillStyle = '#0a0a0f';
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw value
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(point.weight.toFixed(1), x, y - 10);
+            });
+        }
+
+        function toggleTask(checkbox) {
+            if (checkbox.checked) {
+                appData.tasksCompleted++;
+                if (checkbox.dataset.type === 'workout') {
+                    const today = new Date().getDay();
+                    const dayIndex = today === 0 ? 6 : today - 1;
+                    appData.weeklyWorkouts[dayIndex] = true;
+                    updateDashboard();
+                }
+            } else {
+                appData.tasksCompleted--;
+            }
+        }
+
+        // Workout Functions
+        function loadWorkoutDay() {
+            const day = document.getElementById('day-selector').value;
+            const plan = workoutPlans[day];
+            const container = document.getElementById('workout-content');
+            
+            let html = `
+                <div class="glass-panel rounded-2xl p-6 mb-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-xl font-bold text-white">${plan.title}</h3>
+                        <span class="px-3 py-1 rounded-full bg-neon-blue/20 text-neon-blue text-sm border border-neon-blue/30">${plan.exercises.length} 个动作</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">${plan.focus}</p>
+                </div>
+            `;
+            
+            plan.exercises.forEach((exercise, index) => {
+                html += `
+                    <div class="exercise-card glass-panel rounded-xl p-4 border-l-4 border-gray-700 hover:border-neon-blue cursor-pointer" onclick="toggleExercise(this)">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-accent-bg flex items-center justify-center text-neon-blue font-bold">
+                                    ${index + 1}
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-white text-lg">${exercise.name}</h4>
+                                    <div class="flex gap-3 text-sm text-gray-400 mt-1">
+                                        <span><i class="fas fa-redo mr-1"></i>${exercise.sets} 组</span>
+                                        <span><i class="fas fa-dumbbell mr-1"></i>${exercise.reps} 次</span>
+                                        <span><i class="fas fa-clock mr-1"></i>${exercise.rest}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="w-6 h-6 rounded border-2 border-gray-600 flex items-center justify-center transition-all check-indicator">
+                                    <i class="fas fa-check text-white text-xs opacity-0 transition-opacity"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-700/50">
+                            <p class="text-sm text-neon-purple"><i class="fas fa-info-circle mr-2"></i>${exercise.note}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function toggleExercise(card) {
+            const indicator = card.querySelector('.check-indicator');
+            const icon = indicator.querySelector('i');
+            
+            if (card.classList.contains('completed')) {
+                card.classList.remove('completed', 'border-neon-green', 'bg-neon-green/10');
+                card.classList.add('border-gray-700');
+                indicator.classList.remove('bg-neon-green', 'border-neon-green');
+                indicator.classList.add('border-gray-600');
+                icon.classList.add('opacity-0');
+            } else {
+                card.classList.add('completed', 'border-neon-green', 'bg-neon-green/10');
+                card.classList.remove('border-gray-700');
+                indicator.classList.add('bg-neon-green', 'border-neon-green');
+                indicator.classList.remove('border-gray-600');
+                icon.classList.remove('opacity-0');
+            }
+        }
+
+        // Nutrition Functions
+        function calculateNutrition() {
+            const weight = parseFloat(document.getElementById('calc-weight').value) || 61;
+            const activity = parseFloat(document.getElementById('calc-activity').value);
+            
+            // Mifflin-St Jeor Equation (simplified for male)
+            const bmr = 10 * weight + 6.25 * 174.5 - 5 * 25 + 5; // Assuming age 25, height 174.5
+            const tdee = Math.round(bmr * activity);
+            const bulk = Math.round(tdee + 300);
+            
+            document.getElementById('bmr-result').textContent = bmr.toLocaleString() + ' kcal';
+            document.getElementById('tdee-result').textContent = tdee.toLocaleString() + ' kcal';
+            document.getElementById('bulk-result').textContent = bulk.toLocaleString() + ' kcal';
+        }
+
+        function quickAddFood(name, calories, protein, carbs, fat) {
+            const food = {
+                name: getFoodNameCN(name),
+                calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat,
+                id: Date.now()
+            };
+            
+            appData.dailyLog.push(food);
+            updateNutritionDisplay();
+        }
+
+        function getFoodNameCN(name) {
+            const names = {
+                'chicken': '鸡胸肉 100g',
+                'rice': '米饭 100g',
+                'egg': '鸡蛋 2个',
+                'oats': '燕麦 100g',
+                'whey': '蛋白粉 1勺',
+                'banana': '香蕉 1根'
+            };
+            return names[name] || name;
+        }
+
+        function updateNutritionDisplay() {
+            const tbody = document.getElementById('food-log');
+            tbody.innerHTML = '';
+            
+            let totalCal = 0, totalPro = 0, totalCarb = 0, totalFat = 0;
+            
+            appData.dailyLog.forEach(food => {
+                totalCal += food.calories;
+                totalPro += food.protein;
+                totalCarb += food.carbs;
+                totalFat += food.fat;
+                
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-800 hover:bg-accent-bg/50 transition-colors';
+                row.innerHTML = `
+                    <td class="py-3 text-white">${food.name}</td>
+                    <td class="py-3 text-gray-300">${food.calories}</td>
+                    <td class="py-3 text-gray-300">${food.protein}g</td>
+                    <td class="py-3 text-gray-300">${food.carbs}g</td>
+                    <td class="py-3 text-gray-300">${food.fat}g</td>
+                    <td class="py-3">
+                        <button onclick="removeFood(${food.id})" class="text-red-400 hover:text-red-300 transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Update totals
+            document.getElementById('total-calories').textContent = totalCal;
+            document.getElementById('total-protein').textContent = totalPro.toFixed(1) + 'g';
+            document.getElementById('total-carbs').textContent = totalCarb.toFixed(1) + 'g';
+            document.getElementById('total-fat').textContent = totalFat.toFixed(1) + 'g';
+            
+            // Update dashboard stats
+            document.getElementById('today-calories').textContent = totalCal;
+            document.getElementById('today-protein').textContent = totalPro.toFixed(1);
+            
+            // Update progress bars
+            const calPercent = Math.min(100, (totalCal / 2450) * 100);
+            const proPercent = Math.min(100, (totalPro / 140) * 100);
+            
+            document.getElementById('calorie-bar').style.width = calPercent + '%';
+            document.getElementById('protein-bar').style.width = proPercent + '%';
+        }
+
+        function removeFood(id) {
+            appData.dailyLog = appData.dailyLog.filter(f => f.id !== id);
+            updateNutritionDisplay();
+        }
+
+        // Handle window resize for chart
+        window.addEventListener('resize', drawWeightChart);
+    </script>
+</body>
+</html>

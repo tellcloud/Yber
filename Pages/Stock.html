@@ -1,0 +1,706 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票数据整合看板 - 交易员专用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #0f3460;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+        }
+
+        .logo h1 {
+            color: #00d9ff;
+            font-size: 24px;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #00d9ff, #0099cc);
+            color: #1a1a2e;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.4);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card h3 {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .stat-card .value.up {
+            color: #00ff88;
+        }
+
+        .stat-card .value.down {
+            color: #ff4757;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e0e0e0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filter-group input::placeholder {
+            color: #888;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-container h2 {
+            margin-bottom: 20px;
+            color: #00d9ff;
+        }
+
+        #trendChart {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .data-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .data-table h2 {
+            padding: 20px;
+            color: #00d9ff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(0, 217, 255, 0.1);
+            color: #00d9ff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .price-up {
+            color: #00ff88;
+        }
+
+        .price-down {
+            color: #ff4757;
+        }
+
+        .change-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .change-badge.up {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .change-badge.down {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .last-update {
+            text-align: right;
+            color: #888;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .stock-code {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 217, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 13px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="https://bailian-bmp-pre.oss-cn-hangzhou.aliyuncs.com/public/system_agent/PlaceHolder.png" alt="Logo">
+                <h1>📊 股票数据整合看板</h1>
+            </div>
+            <div class="header-info">
+                <span id="marketStatus">市场状态：交易中</span>
+                <button class="refresh-btn" id="refreshBtn">🔄 刷新数据</button>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>监控股票数</h3>
+                <div class="value" id="totalStocks">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>上涨股票</h3>
+                <div class="value up" id="upStocks">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>下跌股票</h3>
+                <div class="value down" id="downStocks">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>平均涨跌幅</h3>
+                <div class="value" id="avgChange">0%</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>搜索:</label>
+                <input type="text" id="searchInput" placeholder="输入股票代码或名称">
+            </div>
+            <div class="filter-group">
+                <label>时间范围:</label>
+                <select id="timeRange">
+                    <option value="1">最近 1 个月</option>
+                    <option value="3" selected>最近 3 个月</option>
+                    <option value="6">最近 6 个月</option>
+                    <option value="12">最近 12 个月</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>涨跌幅:</label>
+                <select id="changeFilter">
+                    <option value="all">全部</option>
+                    <option value="up">上涨</option>
+                    <option value="down">下跌</option>
+                    <option value="large">涨跌幅>5%</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>排序:</label>
+                <select id="sortOrder">
+                    <option value="change_desc">涨跌幅降序</option>
+                    <option value="change_asc">涨跌幅升序</option>
+                    <option value="volume_desc">成交量降序</option>
+                    <option value="name_asc">名称排序</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2>📈 整体趋势图</h2>
+            <canvas id="trendChart"></canvas>
+        </div>
+
+        <div class="data-table">
+            <h2>📋 股票数据明细</h2>
+            <div id="tableContent">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在加载数据...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-update">
+            最后更新：<span id="lastUpdateTime">--</span>
+        </div>
+    </div>
+
+    <script>
+        // 模拟股票数据（实际使用时请替换为真实 API 数据）
+        let stockData = [];
+        let trendData = [];
+
+        // 生成模拟股票数据
+        function generateMockData() {
+            const stocks = [
+                { code: '600519', name: '贵州茅台', basePrice: 1780 },
+                { code: '000858', name: '五粮液', basePrice: 165 },
+                { code: '601318', name: '中国平安', basePrice: 48 },
+                { code: '600036', name: '招商银行', basePrice: 35 },
+                { code: '000333', name: '美的集团', basePrice: 58 },
+                { code: '601888', name: '中国中免', basePrice: 85 },
+                { code: '002415', name: '海康威视', basePrice: 32 },
+                { code: '600276', name: '恒瑞医药', basePrice: 42 },
+                { code: '000651', name: '格力电器', basePrice: 38 },
+                { code: '601166', name: '兴业银行', basePrice: 18 },
+                { code: '002594', name: '比亚迪', basePrice: 245 },
+                { code: '600900', name: '长江电力', basePrice: 26 },
+                { code: '000001', name: '平安银行', basePrice: 12 },
+                { code: '601398', name: '工商银行', basePrice: 5.2 },
+                { code: '000002', name: '万科 A', basePrice: 9.5 }
+            ];
+
+            return stocks.map(stock => {
+                const changePercent = (Math.random() * 10 - 5).toFixed(2);
+                const currentPrice = (stock.basePrice * (1 + changePercent / 100)).toFixed(2);
+                const volume = Math.floor(Math.random() * 10000000) + 1000000;
+                
+                return {
+                    code: stock.code,
+                    name: stock.name,
+                    currentPrice: parseFloat(currentPrice),
+                    changePercent: parseFloat(changePercent),
+                    changeAmount: (currentPrice - stock.basePrice).toFixed(2),
+                    volume: volume,
+                    turnover: (volume * currentPrice / 10000).toFixed(2),
+                    high: (currentPrice * (1 + Math.random() * 0.03)).toFixed(2),
+                    low: (currentPrice * (1 - Math.random() * 0.03)).toFixed(2),
+                    open: (currentPrice * (1 + (Math.random() * 0.02 - 0.01))).toFixed(2)
+                };
+            });
+        }
+
+        // 生成趋势数据
+        function generateTrendData(months) {
+            const data = [];
+            const now = new Date();
+            
+            for (let i = months; i >= 0; i--) {
+                const date = new Date(now);
+                date.setMonth(date.getMonth() - i);
+                
+                data.push({
+                    date: date.toLocaleDateString('zh-CN', { month: 'short', year: '2-digit' }),
+                    value: 3000 + Math.random() * 500 - 250
+                });
+            }
+            
+            return data;
+        }
+
+        // 绘制趋势图
+        function drawChart() {
+            const canvas = document.getElementById('trendChart');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 50;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 绘制背景网格
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - 2 * padding) * i / 5;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // 绘制趋势线
+            const data = trendData;
+            const xStep = (width - 2 * padding) / (data.length - 1);
+            const maxValue = Math.max(...data.map(d => d.value));
+            const minValue = Math.min(...data.map(d => d.value));
+            const valueRange = maxValue - minValue;
+            
+            // 绘制渐变区域
+            const gradient = ctx.createLinearGradient(0, padding, 0, height - padding);
+            gradient.addColorStop(0, 'rgba(0, 217, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 217, 255, 0)');
+            
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+            
+            data.forEach((point, index) => {
+                const x = padding + index * xStep;
+                const y = height - padding - (point.value - minValue) / valueRange * (height - 2 * padding);
+                
+                if (index === 0) {
+                    ctx.lineTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.lineTo(width - padding, height - padding);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 绘制趋势线
+            ctx.beginPath();
+            ctx.strokeStyle = '#00d9ff';
+            ctx.lineWidth = 2;
+            
+            data.forEach((point, index) => {
+                const x = padding + index * xStep;
+                const y = height - padding - (point.value - minValue) / valueRange * (height - 2 * padding);
+                
+                if (index === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // 绘制数据点
+            data.forEach((point, index) => {
+                const x = padding + index * xStep;
+                const y = height - padding - (point.value - minValue) / valueRange * (height - 2 * padding);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = '#00d9ff';
+                ctx.fill();
+            });
+            
+            // 绘制坐标轴标签
+            ctx.fillStyle = '#888';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            
+            data.forEach((point, index) => {
+                const x = padding + index * xStep;
+                ctx.fillText(point.date, x, height - 20);
+            });
+            
+            // 绘制 Y 轴标签
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (height - 2 * padding) * i / 5;
+                const value = maxValue - (valueRange * i / 5);
+                ctx.fillText(value.toFixed(0), padding - 10, y + 4);
+            }
+        }
+
+        // 渲染表格
+        function renderTable(data) {
+            const tableContent = document.getElementById('tableContent');
+            
+            if (data.length === 0) {
+                tableContent.innerHTML = '<div class="loading"><p>暂无数据</p></div>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>当前价</th>
+                            <th>涨跌幅</th>
+                            <th>涨跌额</th>
+                            <th>成交量</th>
+                            <th>成交额 (万)</th>
+                            <th>最高</th>
+                            <th>最低</th>
+                            <th>开盘</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.forEach(stock => {
+                const changeClass = stock.changePercent >= 0 ? 'up' : 'down';
+                const changeSign = stock.changePercent >= 0 ? '+' : '';
+                
+                html += `
+                    <tr>
+                        <td><span class="stock-code">${stock.code}</span></td>
+                        <td>${stock.name}</td>
+                        <td class="price-${changeClass}">¥${stock.currentPrice.toFixed(2)}</td>
+                        <td><span class="change-badge ${changeClass}">${changeSign}${stock.changePercent.toFixed(2)}%</span></td>
+                        <td class="price-${changeClass}">${changeSign}¥${stock.changeAmount}</td>
+                        <td>${(stock.volume / 10000).toFixed(2)}万手</td>
+                        <td>${stock.turnover}</td>
+                        <td class="price-up">¥${stock.high}</td>
+                        <td class="price-down">¥${stock.low}</td>
+                        <td>¥${stock.open}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            tableContent.innerHTML = html;
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            const total = stockData.length;
+            const up = stockData.filter(s => s.changePercent > 0).length;
+            const down = stockData.filter(s => s.changePercent < 0).length;
+            const avg = stockData.reduce((sum, s) => sum + s.changePercent, 0) / total;
+            
+            document.getElementById('totalStocks').textContent = total;
+            document.getElementById('upStocks').textContent = up;
+            document.getElementById('downStocks').textContent = down;
+            
+            const avgElement = document.getElementById('avgChange');
+            avgElement.textContent = (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%';
+            avgElement.className = 'value ' + (avg >= 0 ? 'up' : 'down');
+        }
+
+        // 过滤和排序数据
+        function filterAndSortData() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const changeFilter = document.getElementById('changeFilter').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            
+            let filtered = stockData.filter(stock => {
+                // 搜索过滤
+                const matchSearch = stock.code.toLowerCase().includes(searchInput) || 
+                                   stock.name.toLowerCase().includes(searchInput);
+                
+                // 涨跌幅过滤
+                let matchChange = true;
+                if (changeFilter === 'up') {
+                    matchChange = stock.changePercent > 0;
+                } else if (changeFilter === 'down') {
+                    matchChange = stock.changePercent < 0;
+                } else if (changeFilter === 'large') {
+                    matchChange = Math.abs(stock.changePercent) > 5;
+                }
+                
+                return matchSearch && matchChange;
+            });
+            
+            // 排序
+            filtered.sort((a, b) => {
+                switch (sortOrder) {
+                    case 'change_desc':
+                        return b.changePercent - a.changePercent;
+                    case 'change_asc':
+                        return a.changePercent - b.changePercent;
+                    case 'volume_desc':
+                        return b.volume - a.volume;
+                    case 'name_asc':
+                        return a.name.localeCompare(b.name);
+                    default:
+                        return 0;
+                }
+            });
+            
+            return filtered;
+        }
+
+        // 刷新数据
+        function refreshData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '🔄 刷新中...';
+            
+            // 模拟数据加载
+            setTimeout(() => {
+                stockData = generateMockData();
+                const months = parseInt(document.getElementById('timeRange').value);
+                trendData = generateTrendData(months);
+                
+                renderTable(filterAndSortData());
+                updateStats();
+                drawChart();
+                
+                document.getElementById('lastUpdateTime').textContent = 
+                    new Date().toLocaleString('zh-CN');
+                
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '🔄 刷新数据';
+            }, 1000);
+        }
+
+        // 初始化
+        function init() {
+            // 绑定刷新按钮事件
+            document.getElementById('refreshBtn').addEventListener('click', refreshData);
+            
+            // 绑定搜索输入事件
+            document.getElementById('searchInput').addEventListener('input', () => {
+                renderTable(filterAndSortData());
+            });
+            
+            // 绑定筛选器事件
+            document.getElementById('changeFilter').addEventListener('change', () => {
+                renderTable(filterAndSortData());
+            });
+            
+            document.getElementById('sortOrder').addEventListener('change', () => {
+                renderTable(filterAndSortData());
+            });
+            
+            // 绑定时间范围事件
+            document.getElementById('timeRange').addEventListener('change', () => {
+                const months = parseInt(document.getElementById('timeRange').value);
+                trendData = generateTrendData(months);
+                drawChart();
+            });
+            
+            // 窗口大小改变时重绘图表
+            window.addEventListener('resize', () => {
+                drawChart();
+            });
+            
+            // 初始加载数据
+            refreshData();
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

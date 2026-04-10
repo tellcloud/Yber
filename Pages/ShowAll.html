@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资源展示中心</title>
+  <!-- 引入图标库 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="../Styles/ShowAll.css">
+
+</head>
+
+<body>
+
+  <!-- 头部 -->
+  <header>
+    <h1 style="color: rgb(89, 130, 246)">🐟️ 资源展示中心</h1>
+    <div class="tabs">
+      <button class="tab active" data-tab="all">全部</button>
+      <button class="tab" data-tab="game"><i class="fas fa-gamepad"></i> Game</button>
+      <button class="tab" data-tab="video"><i class="fas fa-video"></i> Video</button>
+      <button class="tab" data-tab="txt"><i class="fas fa-file-alt"></i> Txt</button>
+      <button class="tab" data-tab="other"><i class="fas fa-folder"></i> Other</button>
+    </div>
+  </header>
+
+  <!-- 内容区 -->
+  <div class="container">
+    <div class="resource-grid">
+      <!-- Game 资源 -->
+      <div class="card" data-type="game">
+        <div class="card-img"><i class="fas fa-gamepad"></i></div>
+        <div class="card-body">
+          <span class="card-type type-game">Game</span>
+          <h3 class="card-title">冒险游戏Demo</h3>
+          <p class="card-desc">一款像素风格冒险游戏，包含完整关卡与交互系统</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="game">
+        <div class="card-img"><i class="fas fa-robot"></i></div>
+        <div class="card-body">
+          <span class="card-type type-game">Game</span>
+          <h3 class="card-title">竞技对战游戏</h3>
+          <p class="card-desc">多人在线实时对战，支持自定义角色与技能</p>
+        </div>
+      </div>
+
+      <!-- Video 资源 -->
+      <div class="card" data-type="video">
+        <div class="card-img"><i class="fas fa-film"></i></div>
+        <div class="card-body">
+          <span class="card-type type-video">Video</span>
+          <h3 class="card-title">教程视频合集</h3>
+          <p class="card-desc">高清编程教学视频，零基础入门到精通</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="video">
+        <div class="card-img"><i class="fas fa-play-circle"></i></div>
+        <div class="card-body">
+          <span class="card-type type-video">Video</span>
+          <h3 class="card-title">宣传短片</h3>
+          <p class="card-desc">产品宣传展示视频，1080P高清画质</p>
+        </div>
+      </div>
+
+      <!-- Txt 资源 -->
+      <div class="card" data-type="txt">
+        <div class="card-img"><i class="fas fa-file-text"></i></div>
+        <div class="card-body">
+          <span class="card-type type-txt">Txt</span>
+          <h3 class="card-title">使用说明文档</h3>
+          <p class="card-desc">完整产品使用说明、配置参数与注意事项</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="txt">
+        <div class="card-img"><i class="fas fa-notebook"></i></div>
+        <div class="card-body">
+          <span class="card-type type-txt">Txt</span>
+          <h3 class="card-title">笔记资料</h3>
+          <p class="card-desc">学习笔记、知识点总结、代码片段</p>
+        </div>
+      </div>
+
+      <!-- Other 资源 -->
+      <div class="card" data-type="other" onclick="location.href='https://gitcode.com/gh_mirrors/aks/akshare'">
+        <div class="card-img">
+          <svg xmlns="http://www.w3.org/2000/svg" width="138" height="20" role="img" aria-label="Data Science: AKShare"><title>Data Science: AKShare</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="138" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="81" height="20" fill="#555"/><rect x="81" width="57" height="20" fill="#97ca00"/><rect width="138" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="415" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="710">Data Science</text><text x="415" y="140" transform="scale(.1)" fill="#fff" textLength="710">Data Science</text><text aria-hidden="true" x="1085" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="470">AKShare</text><text x="1085" y="140" transform="scale(.1)" fill="#fff" textLength="470">AKShare</text></g></svg>
+        </div>
+        <div class="card-body">
+          <span class="card-type type-other">Other</span>
+          <h3 class="card-title">AKShare财经数据API</h3>
+          <p class="card-desc">一款免费开源的量化投研数据获取工具</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="other">
+        <div class="card-img"><i class="fas fa-tools"></i></div>
+        <div class="card-body">
+          <span class="card-type type-other">Other</span>
+          <h3 class="card-title">素材资源包</h3>
+          <p class="card-desc">图标、字体、模板等设计素材合集</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-zinc-900 text-white py-16">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-12 gap-y-10">
+                <div class="md:col-span-5">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="text-2xl font-bold">我的网站</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-8">© 2026 保留所有权利</p>
+                </div>
+                    <p class="mt-12 text-xs text-zinc-500">Made with ❤️ &amp; Tailwind CSS</p>
+            </div>
+        </div>
+    </footer>
+
+  <script src="../Scripts/ShowAll.js"></script>
+
+</body>
+
+</html>

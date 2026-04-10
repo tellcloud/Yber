@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 贪吃蛇</title>
+    <link rel="stylesheet" href="../Styles/Snake.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>🐍 贪吃蛇</h1>
+        <div class="info-bar">
+            <div class="score">分数: <span id="score">0</span></div>
+            <div class="speed-label">速度: <span id="speed">1</span></div>
+            <div class="best-score">最高: <span id="best">0</span></div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <div class="overlay active" id="overlay">
+                <h2 id="overlayTitle">🐍 贪吃蛇</h2>
+                <p class="final-score" id="overlayMsg">经典重现，挑战高分！</p>
+                <button class="btn" id="startBtn">开始游戏</button>
+            </div>
+        </div>
+        <div class="controls">
+            <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 或 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 控制方向 &nbsp;|&nbsp; <kbd>Space</kbd> 暂停
+        </div>
+
+        <!-- 移动端方向键 -->
+        <div class="mobile-controls">
+            <div class="row">
+                <div class="placeholder"></div>
+                <button class="dir-btn" data-dir="up">▲</button>
+                <div class="placeholder"></div>
+            </div>
+            <div class="row">
+                <button class="dir-btn" data-dir="left">◀</button>
+                <button class="dir-btn" data-dir="down">▼</button>
+                <button class="dir-btn" data-dir="right">▶</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Scripts/Snake.js"></script>
+</body>
+</html>

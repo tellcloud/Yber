@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+:root {
+    --primary: #3b82f6;
+}
+
+* {
+    font-family: 'Noto Sans SC', system-ui, sans-serif;
+}
+
+.Win-run{
+    background-color: #3b82f6;
+    border: 1px solid #000000;
+    padding: 10px 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.hero-bg {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.section-title {
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: 9999px;
+}
+
+.card-hover {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+}
