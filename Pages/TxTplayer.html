@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>印章使用审批表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        body {
+            padding: 20px;
+            padding-left: 400px;
+            padding-right: 400px;
+            background-color: #e2e2e2;
+        }
+
+        .showtable {
+            padding: 20px;
+            padding-left: 200px;
+            padding-right: 200px;
+            border: 1px solid #333;
+            margin: 10px;
+            background-color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+
+        td {
+            border: 1px solid #333;
+            padding: 12px 15px;
+            font-size: 16px;
+        }
+
+        .label {
+            font-weight: bold;
+            text-align: center;
+            background-color: #f5f5f5;
+            width: 18%;
+        }
+
+        .input-cell {
+            height: 20px;
+        }
+
+        .checkbox-group {
+            line-height: 2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="showtable">
+        <h1>印章使用审批表</h1>
+        <table>
+            <tr>
+                <td class="label">主题</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">申请部门</td>
+                <td class="input-cell"></td>
+                <td class="label">申请日期</td>
+                <td class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">经办人</td>
+                <td class="input-cell"></td>
+                <td class="label">用印数量</td>
+                <td class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">使用印章<br>名称</td>
+                <td colspan="3" class="checkbox-group">
+                    <div>
+                        □集团：□党委章 □公章 □法定代表人章 □合同专用章 □证明专用章
+                    </div>
+                    <div style="margin-top: 8px;">
+                        □集团：□党委章 □公章 □法定代表人章
+                    </div>
+                    <div style="margin-top: 8px;">
+                        □集团：□党委章 □公章 □法定代表人章
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="label">文件名称</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">用印事由</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">是否携带印章外出</td>
+                <td>
+                    <input type="checkbox" id="out-yes"> <label for="out-yes">是</label>
+                    <input type="checkbox" id="out-no" style="margin-left: 15px;"> <label for="out-no">否</label>
+                </td>
+                <td class="label">借出时间</td>
+                <td class="input-cell">年&nbsp;&nbsp;&nbsp;月&nbsp;&nbsp;&nbsp;日</td>
+            </tr>
+            <tr>
+                <td class="label">用印部门<br>负责人审核</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">综合管理部<br>审核</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">相关部门意见</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">分管领导审核</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">党委副书记、总经<br>理审批</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">党委书记、董事长<br>审批</td>
+                <td colspan="3" class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">印章管理人签字</td>
+                <td class="input-cell"></td>
+                <td class="label">经办人签字</td>
+                <td class="input-cell"></td>
+            </tr>
+            <tr>
+                <td class="label">归还时间：</td>
+                <td colspan="3" class="input-cell">年&nbsp;&nbsp;&nbsp;月&nbsp;&nbsp;&nbsp;日</td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+</html>
