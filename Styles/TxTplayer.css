@@ -7,16 +7,15 @@
 
 body {
     padding: 20px;
-    padding-left: 400px;
+    padding-left: 550px;
     padding-right: 400px;
     background-color: #e2e2e2;
 }
 
 .showtable {
     padding: 20px;
-    padding-left: 200px;
-    padding-right: 200px;
-    border: 1px solid #333;
+    width: 800px;
+    margin: 10px auto;
     margin: 10px;
     background-color: #fff;
 }
@@ -28,7 +27,7 @@ h1 {
 }
 
 table {
-    width: 100%;
+    width: 750px;
     border-collapse: collapse;
     border: 1px solid #333;
 }
