@@ -20,8 +20,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="all">全部</button>
       <button class="tab" data-tab="game"><i class="fas fa-gamepad"></i> Game</button>
-      <button class="tab" data-tab="video"><i class="fas fa-video"></i> Video</button>
-      <button class="tab" data-tab="txt"><i class="fas fa-file-alt"></i> Txt</button>
+      <button class="tab" data-tab="book"><i class="fas fa-file-alt"></i> Book</button>
       <button class="tab" data-tab="other"><i class="fas fa-folder"></i> Other</button>
     </div>
   </header>
@@ -35,7 +34,7 @@
         <div class="card-body">
           <span class="card-type type-game">Game</span>
           <h3 class="card-title">贪吃蛇Demo</h3>
-          <p class="card-desc">思考手机端应该怎么操控</p>
+          <p class="card-desc">思考手机端怎么比PC端分数高</p>
         </div>
       </div>
 
@@ -49,41 +48,31 @@
         </div>
       </div>
 
-      <!-- Video 资源 -->
-      <div class="card" data-type="video">
-        <div class="card-img"><i class="fas fa-film"></i></div>
-        <div class="card-body">
-          <span class="card-type type-video">Video</span>
-          <h3 class="card-title">教程视频合集</h3>
-          <p class="card-desc">高清编程教学视频，零基础入门到精通</p>
-        </div>
-      </div>
-
-      <div class="card" data-type="video">
-        <div class="card-img"><i class="fas fa-play-circle"></i></div>
-        <div class="card-body">
-          <span class="card-type type-video">Video</span>
-          <h3 class="card-title">宣传短片</h3>
-          <p class="card-desc">产品宣传展示视频，1080P高清画质</p>
-        </div>
-      </div>
-
-      <!-- Txt 资源 -->
-      <div class="card" data-type="txt">
+      <!-- Book 资源 -->
+      <div class="card" data-type="book">
         <div class="card-img"><i class="fas fa-file-text"></i></div>
         <div class="card-body">
-          <span class="card-type type-txt">Txt</span>
+          <span class="card-type type-book">Book</span>
           <h3 class="card-title">使用说明文档</h3>
           <p class="card-desc">完整产品使用说明、配置参数与注意事项</p>
         </div>
       </div>
 
-      <div class="card" data-type="txt">
+      <div class="card" data-type="book">
         <div class="card-img"><i class="fas fa-notebook"></i></div>
         <div class="card-body">
-          <span class="card-type type-txt">Txt</span>
+          <span class="card-type type-book">Book</span>
           <h3 class="card-title">笔记资料</h3>
           <p class="card-desc">学习笔记、知识点总结、代码片段</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="book">
+        <div class="card-img"><i class="fas fa-play-circle"></i></div>
+        <div class="card-body">
+          <span class="card-type type-book">Book</span>
+          <h3 class="card-title">宣传短片</h3>
+          <p class="card-desc">产品宣传展示视频，1080P高清画质</p>
         </div>
       </div>
 
@@ -96,6 +85,15 @@
           <span class="card-type type-other">Other</span>
           <h3 class="card-title">AKShare财经数据API</h3>
           <p class="card-desc">一款免费开源的量化投研数据获取工具</p>
+        </div>
+      </div>
+
+      <div class="card" data-type="other" onclick="location.href='TxTplayer.html'">
+        <div class="card-img">📖</div>
+        <div class="card-body">
+          <span class="card-type type-other">Other</span>
+          <h3 class="card-title">TXT文本阅读器</h3>
+          <p class="card-desc">用印申请表伪装的TXT文本阅读器</p>
         </div>
       </div>
 

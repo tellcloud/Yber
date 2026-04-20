@@ -132,12 +132,12 @@ header h1 {
     background: rgba(255, 107, 107, 0.1) !important;
 }
 
-.type-video {
+/* .type-video {
     color: #feca57;
     background: rgba(254, 202, 87, 0.1) !important;
-}
+} */
 
-.type-txt {
+.type-book {
     color: #48dbfb;
     background: rgba(72, 219, 251, 0.1) !important;
 }

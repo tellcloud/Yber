@@ -7,9 +7,10 @@
 
 body {
     padding: 20px;
-    padding-left: 550px;
-    padding-right: 400px;
     background-color: #e2e2e2;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .showtable {
@@ -27,6 +28,7 @@ h1 {
 }
 
 table {
+    max-width: 750px;
     width: 750px;
     border-collapse: collapse;
     border: 1px solid #333;

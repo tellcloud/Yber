@@ -61,10 +61,11 @@
             </tr>
             <tr>
                 <td class="label">用印事由</td>
-                <td colspan="3" class="input-cell" contenteditable="true">
-                    <div style="max-height: 150px; overflow-y: auto; padding: 4px;">
-                        这里是很长的内容...（重复多行或大段文本）
-                        内容超出 150px 后会出现垂直滚动条。
+                <td colspan="3" class="input-cell"> 
+                    <button id="fileButton">选择文件</button>
+                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                    <div id="contentDiv" style="max-height: 200px; max-width: 550px; overflow-y: auto; overflow-x: auto; padding: 4px;" contenteditable="true">
+                        支持导入TXT格式文件
                     </div>
                 </td>
             </tr>
@@ -94,11 +95,11 @@
                 <td colspan="3" class="input-cell"></td>
             </tr>
             <tr>
-                <td class="label">党委副书记、总经<br>理审批</td>
+                <td class="label">党委副书记、总经理审批</td>
                 <td colspan="3" class="input-cell"></td>
             </tr>
             <tr>
-                <td class="label">党委书记、董事长<br>审批</td>
+                <td class="label">党委书记、董事长审批</td>
                 <td colspan="3" class="input-cell"></td>
             </tr>
             <tr>
