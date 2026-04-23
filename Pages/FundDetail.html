@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!--readme：这个数据看板的样式css与脚本js全都整合在html文件中，
+因为我是在两台电脑上分别完成的内容，所以为了方便查看，我直接整合在html文件中了-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>数据看板</title>
+    <!-- ECharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <!-- 额外样式与辅助库 -->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            padding: 24px 20px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            transition: all 0.2s;
+            border: 1px solid #eef2f6;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #eef2f6;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            background: linear-gradient(135deg, #1e3c72, #2b4c7c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .badge {
+            background: #eef2ff;
+            color: #1e3a8a;
+            border-radius: 40px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .fund-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+
+        .meta-item {
+            background: #f8fafc;
+            padding: 6px 14px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .meta-value {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .rate-value {
+            color: #16a34a;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 24px;
+        }
+
+        .chart-box {
+            width: 100%;
+            height: 380px;
+        }
+
+        .simulator-panel {
+            background: linear-gradient(120deg, #f9fafb, #ffffff);
+            border-radius: 28px;
+            padding: 16px 24px 24px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .sim-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            margin: 20px 0 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        select,
+        input {
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 60px;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+            min-width: 180px;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #2b4c7c;
+            box-shadow: 0 0 0 3px rgba(43, 76, 124, 0.2);
+        }
+
+        button {
+            background: #1e3c72;
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        button:hover {
+            background: #0f2b4f;
+            transform: translateY(-1px);
+        }
+
+        .result-card {
+            background: #f1f5f9;
+            border-radius: 24px;
+            padding: 18px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .result-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #475569;
+        }
+
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .profit-positive {
+            color: #16a34a;
+        }
+
+        .profit-negative {
+            color: #dc2626;
+        }
+
+        .footnote {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 24px;
+            color: #6c757d;
+        }
+
+        @media (max-width: 720px) {
+            body {
+                padding: 16px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .sim-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            select,
+            input,
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<div class="container">
+    <!--搜索框-->
+    <div class="card">
+        <div>
+            <span>🔍 基金搜索</span>
+        </div>
+        <div style="display: flex; gap: 10px; padding: 10px 0;">
+            <input type="text" id="fundCodeInput" placeholder="请输入基金代码，如： 000001" style="flex: 1;">
+            <button id="searchBtn">查询</button>
+        </div>
+    </div>
+    <!-- 基金基本信息卡片 -->
+    <div class="card">
+        <div class="card-header">
+            <h2><span id="fundName">未获取基金名称，请检查基金代码是否正确</span>
+                <span style="font-size: 0.9rem; font-weight: normal;">(<span id="fundCode">XXXXXX</span>)</span>
+            </h2>
+            <div class="badge">投资需谨慎，请核实数据准确性--数据来源于东方财富网</div>
+        </div>
+        <div class="fund-meta">
+            <div class="meta-item"><span class="meta-label">原费率</span><span class="meta-value"
+                    id="fund_sourceRate">--</span></div>
+            <div class="meta-item"><span class="meta-label">现费率</span><span class="meta-value rate-value"
+                    id="fund_Rate">--</span></div>
+            <div class="meta-item"><span class="meta-label">最小申购金额</span><span class="meta-value"
+                    id="fund_minsg">--</span></div>
+            <div class="meta-item"><span class="meta-label">近1年收益率</span><span class="meta-value rate-value"
+                    id="syl_1n_span">--</span></div>
+            <div class="meta-item"><span class="meta-label">近6月</span><span class="meta-value"
+                    id="syl_6y_span">--</span></div>
+            <div class="meta-item"><span class="meta-label">基金经理</span><span class="meta-value"
+                    id="fund_manager">未知</span></div>
+        </div>
+    </div>
+
+    <!-- 核心图表区 -->
+
+    <div class="card">
+        <div class="card-header">
+            <h2>单位净值历史走势</h2><span class="badge">只喜欢看整体趋势</span>
+        </div>
+        <div id="navChart" class="chart-box"></div>
+        <div class="footnote" style="margin-top: 8px;">*数据基于东方财富网提供的每日单位净值</div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>累计收益率</h2>
+            <div style="display: flex; gap: 10px; padding: 0 10px;">
+                <button class="time-btn active" data-period="week">按周</button>
+                <button class="time-btn" data-period="month">按月</button>
+                <button class="time-btn" data-period="year">按年</button>
+                <button class="time-btn" data-period="all">成立来</button>
+            </div>
+            <span class="badge">收益率体现趋势</span>
+        </div>
+        <div id="returnChart" class="chart-box"></div>
+    </div>
+
+    <!-- 第二行: 同类排名百分比 & 规模变动 -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <h2>同类排名百分比</h2><span class="badge">排名越高越好 (百分比越小越靠前)</span>
+            </div>
+            <div id="rankChart" class="chart-box"></div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>基金规模变动 (亿元)</h2><span class="badge">季度环比</span>
+            </div>
+            <div id="scaleChart" class="chart-box"></div>
+        </div>
+    </div>
+
+    <!-- 资产配置 & 持有人结构 合并展示用简单卡片，为了丰富 -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <h2>资产配置 (%)</h2><span class="badge">股票占净比 / 现金</span>
+            </div>
+            <div id="assetChart" class="chart-box" style="height: 320px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>持有人结构</h2><span class="badge">用于判断基金成分</span>
+            </div>
+            <div id="holderChart" class="chart-box" style="height: 320px;"></div>
+        </div>
+    </div>
+
+    <!-- 基金模拟游戏区块 -->
+    <div class="card simulator-panel">
+        <div class="card-header">
+            <h2>基金模拟投资</h2><span class="badge">基于历史真实净值 · 体验择时收益</span>
+        </div>
+        <div class="sim-controls">
+            <div class="input-group">
+                <label>📅 买入日期</label>
+                <select id="buyDateSelect"></select>
+            </div>
+            <div class="input-group">
+                <label>📅 卖出日期</label>
+                <select id="sellDateSelect"></select>
+            </div>
+            <div class="input-group">
+                <label>💰 投入金额 (元)</label>
+                <input type="number" id="investAmount" value="10000" step="1000" min="10">
+            </div>
+            <button id="simulateBtn">🚀 模拟收益</button>
+        </div>
+        <div id="simResult" class="result-card">
+            <div class="result-item">
+                <div class="result-label">买入净值</div>
+                <div class="result-number" id="buyNav">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">卖出净值</div>
+                <div class="result-number" id="sellNav">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">持有份额</div>
+                <div class="result-number" id="shares">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">最终市值</div>
+                <div class="result-number" id="finalValue">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">收益金额</div>
+                <div class="result-number" id="profitAmount">--</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">收益率</div>
+                <div class="result-number" id="profitRate">--</div>
+            </div>
+        </div>
+        <div class="footnote" style="margin-top: 12px;">※ 模拟基于基金真实历史单位净值，不包含申购/赎回费用，仅供策略娱乐参考。可选择任意交易日买卖。</div>
+    </div>
+</div>
+
+<!--导入基金数据-->
+<script src="http://fund.eastmoney.com/pingzhongdata/000001.js?v=20260418155842"></script>
+
+<script>
+
+    // 搜索按钮点击事件
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        const fundCode = document.getElementById('fundCodeInput').value.trim();
+        if (fundCode && /^\d{6}$/.test(fundCode)) {
+            updateFundData(fundCode);
+        } else {
+            alert('请输入6位数字的基金代码');
+        }
+    });
+    // 输入框回车事件
+    document.getElementById('fundCodeInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('searchBtn').click();
+        }
+    });
+    // 更新基金数据的主函数
+    function updateFundData(fundCode) {
+        currentFundCode = fundCode;
+        
+        // 显示加载状态
+        document.getElementById('fundName').innerText = '加载中...';
+        document.getElementById('fundCode').innerText = fundCode;
+        
+        // 动态加载基金数据脚本
+        loadFundScript(fundCode);
+    }
+    // 动态加载基金数据脚本
+    function loadFundScript(fundCode) {
+        // 移除旧的脚本（如果存在）
+        const oldScript = document.querySelector('script[src*="pingzhongdata"]');
+        if (oldScript) {
+            oldScript.remove();
+        }
+        
+        // 创建新的脚本元素
+        const script = document.createElement('script');
+        script.src = `http://fund.eastmoney.com/pingzhongdata/${fundCode}.js?v=${Date.now()}`;
+        script.onload = function() {
+            // 脚本加载完成后，更新页面数据
+            setTimeout(() => {
+                updatePageData();
+            }, 500); // 给脚本一些时间执行
+        };
+        script.onerror = function() {
+            alert('基金代码不存在或数据加载失败，请检查基金代码是否正确');
+            document.getElementById('fundName').innerText = '未获取基金名称，请检查基金代码是否正确';
+        };
+        
+        document.head.appendChild(script);
+    }
+    // 更新页面所有数据
+    function updatePageData() {
+        // 更新基本信息
+        updateBasicInfo();
+        
+        // 更新所有图表
+        updateAllCharts();
+        
+        // 更新模拟器
+        updateSimulator();
+    }
+    // 更新基本信息
+    function updateBasicInfo() {
+        // 基金名称和代码
+        if (typeof fS_name !== 'undefined' && fS_name !== null) {
+            document.getElementById('fundName').innerText = fS_name;
+        }
+        if (typeof fS_code !== 'undefined' && fS_code !== null) {
+            document.getElementById('fundCode').innerText = fS_code;
+        }
+        
+        // 费率信息
+        if (typeof fund_sourceRate !== 'undefined') {
+            document.getElementById('fund_sourceRate').innerText = fund_sourceRate + '%';
+        }
+        if (typeof fund_Rate !== 'undefined') {
+            document.getElementById('fund_Rate').innerText = fund_Rate + '%';
+        }
+        if (typeof fund_minsg !== 'undefined') {
+            document.getElementById('fund_minsg').innerText = fund_minsg + '元';
+        }
+        
+        // 收益率信息
+        if (typeof syl_1n !== 'undefined') {
+            document.getElementById('syl_1n_span').innerText = syl_1n + '%';
+        }
+        if (typeof syl_6y !== 'undefined') {
+            document.getElementById('syl_6y_span').innerText = syl_6y + '%';
+        }
+        
+        // 基金经理信息
+        if (Data_currentFundManager && Data_currentFundManager.length > 0) {
+            const fundManager = Data_currentFundManager[0];
+            const managerName = fundManager.name || '未知';
+            const managerStar = fundManager.star || 0;
+            const starRating = '★'.repeat(managerStar) + '☆'.repeat(5 - managerStar);
+            document.querySelector('.meta-item:last-child .meta-value').innerText = managerName + ' ' + starRating;
+        }
+    }
+    // 更新所有图表
+    function updateAllCharts() {
+        updateNavChart();
+        updateRankChart();
+        updateReturnChart('all');
+        updateScaleChart();
+        updateAssetChart();
+        updateHolderChart();
+    }
+    // 净值走势图更新函数
+    function updateNavChart() {
+        if (typeof Data_netWorthTrend === 'undefined' || !Data_netWorthTrend.length) {
+            console.log('净值数据不可用');
+            return;
+        }
+        
+        const navData = Data_netWorthTrend.map(item => ({ date: new Date(item.x), nav: item.y }));
+        navData.sort((a, b) => a.date - b.date);
+        const dateLabels = navData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+        const navValues = navData.map(d => d.nav);
+        const navChart = echarts.getInstanceByDom(document.getElementById('navChart')) || 
+                         echarts.init(document.getElementById('navChart'));
+        navChart.setOption({
+            tooltip: { trigger: 'axis', valueFormatter: (v) => v?.toFixed(4) },
+            xAxis: { type: 'category', data: dateLabels, axisLabel: { rotate: 45, interval: 'auto' } },
+            yAxis: { type: 'value', name: '单位净值' },
+            series: [{ type: 'line', data: navValues, smooth: true, areaStyle: { opacity: 0.1 }, lineStyle: { color: '#2b4c7c', width: 2 }, name: '单位净值' }],
+            grid: { containLabel: true }
+        });
+    }
+    // 同类排名百分比更新函数
+    function updateRankChart() {
+        const rankChart = echarts.getInstanceByDom(document.getElementById('rankChart')) || 
+                         echarts.init(document.getElementById('rankChart'));
+        
+        if (Data_rateInSimilarPersent && Data_rateInSimilarPersent.length > 0) {
+            const rankData = Data_rateInSimilarPersent.map(item => ({
+                date: new Date(item[0]),
+                rank: item[1]
+            }));
+            rankData.sort((a, b) => a.date - b.date);
+            const rankDateLabels = rankData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+            const rankValues = rankData.map(d => d.rank);
+            rankChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: rankDateLabels, position: "top", axisLabel: { rotate: 45, interval: 'auto' } },
+                yAxis: { type: 'value', name: '排名百分比 (%)', inverse: true, max: 100 },
+                series: [{ type: 'line', data: rankValues, smooth: true, lineStyle: { color: '#2b4c7c', width: 2 }, name: '同类排名百分比' }]
+            });
+        } else {
+            rankChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { data: [] },
+                yAxis: { type: 'value', name: '排名百分比 (%)', inverse: true, max: 100 },
+                series: [{ type: 'line', data: [], name: '同类排名百分比' }]
+            });
+        }
+    }
+    // 累计收益率更新函数
+    function updateReturnChart(period) {
+        if (typeof Data_netWorthTrend === 'undefined' || !Data_netWorthTrend.length) {
+            return;
+        }
+        
+        const navData = Data_netWorthTrend.map(item => ({ date: new Date(item.x), nav: item.y }));
+        navData.sort((a, b) => a.date - b.date);
+        const dateLabels = navData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+        const navValues = navData.map(d => d.nav);
+        
+        const returnChart = echarts.getInstanceByDom(document.getElementById('returnChart')) || 
+                           echarts.init(document.getElementById('returnChart'));
+        
+        let dataCount;
+        switch (period) {
+            case 'week': dataCount = 7; break;
+            case 'month': dataCount = 30; break;
+            case 'year': dataCount = 365; break;
+            case 'all': default: dataCount = navData.length; break;
+        }
+        dataCount = Math.min(dataCount, navData.length);
+        const selectedLabels = dateLabels.slice(-dataCount);
+        const selectedValues = navValues.slice(-dataCount);
+        const returnData = selectedValues.map((v, i, arr) => i === 0 ? 0 : (v - arr[0]) / arr[0] * 100);
+        
+        returnChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: selectedLabels, axisLabel: { rotate: 45, interval: 'auto' } },
+            yAxis: { type: 'value', name: '累计收益率 (%)' },
+            series: [{
+                type: 'line',
+                data: returnData,
+                smooth: true,
+                lineStyle: { color: '#2b4c7c', width: 2 },
+                name: '累计收益率 (自起始)'
+            }]
+        });
+    }
+    // 规模变动更新函数
+    function updateScaleChart() {
+        const scaleChart = echarts.getInstanceByDom(document.getElementById('scaleChart')) || 
+                          echarts.init(document.getElementById('scaleChart'));
+        
+        if (typeof Data_fluctuationScale !== 'undefined' && Data_fluctuationScale.categories) {
+            scaleChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: Data_fluctuationScale.categories },
+                yAxis: { type: 'value', name: '规模 (亿元)' },
+                series: [{ type: 'bar', data: Data_fluctuationScale.series.map(s => s.y), itemStyle: { borderRadius: [8, 8, 0, 0] }, label: { show: true } }]
+            });
+        } else {
+            scaleChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: [] },
+                yAxis: { type: 'value', name: '规模 (亿元)' },
+                series: [{ type: 'bar', data: [] }]
+            });
+        }
+    }
+    // 资产配置更新函数
+    function updateAssetChart() {
+        const assetChart = echarts.getInstanceByDom(document.getElementById('assetChart')) || 
+                          echarts.init(document.getElementById('assetChart'));
+        
+        if (typeof Data_assetAllocation !== 'undefined' && Data_assetAllocation.categories) {
+            assetChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: Data_assetAllocation.categories },
+                yAxis: { type: 'value', name: '占比 (%)' },
+                series: Data_assetAllocation.series.filter(s => s.name !== '净资产').map(s => ({ name: s.name, type: 'bar', stack: 'total', data: s.data }))
+            });
+        } else {
+            assetChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: [] },
+                yAxis: { type: 'value', name: '占比 (%)' },
+                series: []
+            });
+        }
+    }
+    // 持有人结构更新函数
+    function updateHolderChart() {
+        const holderChart = echarts.getInstanceByDom(document.getElementById('holderChart')) || 
+                           echarts.init(document.getElementById('holderChart'));
+        
+        if (typeof Data_holderStructure !== 'undefined' && Data_holderStructure.categories) {
+            holderChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: Data_holderStructure.categories },
+                yAxis: { type: 'value', name: '比例 (%)' },
+                series: Data_holderStructure.series.map(s => ({ name: s.name, type: 'bar', data: s.data, barGap: 0 }))
+            });
+        } else {
+            holderChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: [] },
+                yAxis: { type: 'value', name: '比例 (%)' },
+                series: []
+            });
+        }
+    }
+    // 更新模拟器
+    function updateSimulator() {
+        if (typeof Data_netWorthTrend === 'undefined' || !Data_netWorthTrend.length) {
+            return;
+        }
+        
+        const navData = Data_netWorthTrend.map(item => ({ date: new Date(item.x), nav: item.y }));
+        navData.sort((a, b) => a.date - b.date);
+        const dateLabels = navData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+        
+        const buySelect = document.getElementById('buyDateSelect');
+        const sellSelect = document.getElementById('sellDateSelect');
+        
+        // 清空现有选项
+        buySelect.innerHTML = '';
+        sellSelect.innerHTML = '';
+        
+        // 填充新的日期选项
+        navData.forEach((item, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = dateLabels[idx];
+            buySelect.appendChild(opt);
+            sellSelect.appendChild(opt.cloneNode(true));
+        });
+        
+        if (navData.length) {
+            buySelect.value = '0';
+            sellSelect.value = (navData.length - 1).toString();
+        }
+        
+        // 重新绑定模拟按钮事件
+        bindSimulateEvent();
+    }
+    // 绑定模拟按钮事件
+    function bindSimulateEvent() {
+        const simulateBtn = document.getElementById('simulateBtn');
+        // 移除旧的事件监听器
+        simulateBtn.replaceWith(simulateBtn.cloneNode(true));
+        
+        // 添加新的事件监听器
+        document.getElementById('simulateBtn').addEventListener('click', function() {
+            const buyIndex = parseInt(document.getElementById('buyDateSelect').value);
+            const sellIndex = parseInt(document.getElementById('sellDateSelect').value);
+            const amount = parseFloat(document.getElementById('investAmount').value);
+            
+            if (buyIndex >= sellIndex) {
+                alert('卖出日期必须晚于买入日期');
+                return;
+            }
+            
+            const navData = Data_netWorthTrend.map(item => item.y);
+            const buyNav = navData[buyIndex];
+            const sellNav = navData[sellIndex];
+            const shares = amount / buyNav;
+            const finalValue = shares * sellNav;
+            const profit = finalValue - amount;
+            const profitRate = (profit / amount) * 100;
+            
+            document.getElementById('buyNav').innerText = buyNav.toFixed(4);
+            document.getElementById('sellNav').innerText = sellNav.toFixed(4);
+            document.getElementById('shares').innerText = shares.toFixed(2);
+            document.getElementById('finalValue').innerText = finalValue.toFixed(2);
+            document.getElementById('profitAmount').innerText = profit.toFixed(2);
+            document.getElementById('profitRate').innerText = profitRate.toFixed(2) + '%';
+            
+            // 设置颜色
+            const profitAmount = document.getElementById('profitAmount');
+            const profitRateEl = document.getElementById('profitRate');
+            if (profit >= 0) {
+                profitAmount.className = 'result-number profit-positive';
+                profitRateEl.className = 'result-number profit-positive';
+            } else {
+                profitAmount.className = 'result-number profit-negative';
+                profitRateEl.className = 'result-number profit-negative';
+            }
+        });
+    }
+    // 时间范围按钮点击事件
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateReturnChart(this.dataset.period);
+        });
+    });
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 绑定模拟按钮事件
+        bindSimulateEvent();
+        // 初始化所有图表
+        updateAllCharts();
+    });
+
+    // 补充 syl 显示
+    document.getElementById('fund_sourceRate').innerText = fund_sourceRate + '%';
+    document.getElementById('fund_Rate').innerText = fund_Rate + '%';
+    document.getElementById('fund_minsg').innerText = fund_minsg + '元';
+    document.getElementById('syl_1n_span').innerText = syl_1n + '%';
+    document.getElementById('syl_6y_span').innerText = syl_6y + '%';
+
+    // 从Data_currentFundManager获取基金经理信息
+    if (Data_currentFundManager && Data_currentFundManager.length > 0) {
+        const fundManager = Data_currentFundManager[0];
+        const managerName = fundManager.name || '未知';
+        const managerStar = fundManager.star || 0;
+        const starRating = '★'.repeat(managerStar) + '☆'.repeat(5 - managerStar);
+        //找到最后一个 class 为 meta-item 的元素内部的 class 为 meta-value 的子元素，更新其文本内容
+        document.querySelector('.meta-item:last-child .meta-value').innerText = managerName + ' ' + starRating;
+    }
+
+    // 从导入的JS文件获取基金名称和代码
+    if (typeof fS_name !== null) {
+        document.getElementById('fundName').innerText = fS_name;
+    }
+    if (typeof fS_code !== null) {
+        document.getElementById('fundCode').innerText = fS_code;
+    }
+
+    // 处理净值数据
+    const navData = Data_netWorthTrend.map(item => ({ date: new Date(item.x), nav: item.y }));
+    navData.sort((a, b) => a.date - b.date);
+    const dateLabels = navData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+    const navValues = navData.map(d => d.nav);
+
+    // 净值走势图
+    const navChart = echarts.init(document.getElementById('navChart'));
+    navChart.setOption({
+        tooltip: { trigger: 'axis', valueFormatter: (v) => v?.toFixed(4) },
+        xAxis: { type: 'category', data: dateLabels, axisLabel: { rotate: 45, interval: 'auto' } },
+        yAxis: { type: 'value', name: '单位净值' },
+        series: [{ type: 'line', data: navValues, smooth: true, areaStyle: { opacity: 0.1 }, lineStyle: { color: '#2b4c7c', width: 2 }, name: '单位净值' }],
+        grid: { containLabel: true }
+    });
+
+    // 同类排名百分比 (使用真实数据)
+    const rankChart = echarts.init(document.getElementById('rankChart'));
+    if (Data_rateInSimilarPersent && Data_rateInSimilarPersent.length > 0) {
+        //处理Data_rateInSimilarPersent数据
+        const rankData = Data_rateInSimilarPersent.map(item => ({
+            date: new Date(item[0]),
+            rank: item[1]
+        }));
+        rankData.sort((a, b) => a.date - b.date);
+        const rankDateLabels = rankData.map(d => `${d.date.getFullYear()}-${(d.date.getMonth() + 1).toString().padStart(2, '0')}-${d.date.getDate().toString().padStart(2, '0')}`);
+        const rankValues = rankData.map(d => d.rank);
+
+        rankChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: rankDateLabels, position: "top", axisLabel: { rotate: 45, interval: 'auto' } },
+            yAxis: { type: 'value', name: '排名百分比 (%)', inverse: true, max: 100 },
+            series: [{ type: 'line', data: rankValues, smooth: true, lineStyle: { color: '#2b4c7c', width: 2 }, name: '同类排名百分比' }]
+        });
+    } else {
+        //  fallback to sample data if real data not available
+        rankChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { data: dateLabels.slice(-200) },
+            yAxis: { type: 'value', name: '排名百分比 (%)', inverse: true, max: 100 },
+            series: [{ type: 'line', data: Array(dateLabels.slice(-200).length).fill(50), name: '示例排名趋势' }]
+        });
+    }
+
+    /*// 累计收益率简化展示 (仅使用基金自身)
+    const returnChart = echarts.init(document.getElementById('returnChart'));
+    returnChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dateLabels.slice(-180) },
+        yAxis: { type: 'value', name: '累计收益率 (%)' },
+        series: [{ type: 'line', data: navValues.slice(-180).map((v, i, arr) => i === 0 ? 0 : (v - arr[0]) / arr[0] * 100), name: '累计收益率 (自起始)' }]
+    });*/
+
+    // 初始显示所有数据
+    updateReturnChart('all');
+    // 时间范围按钮点击事件
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            // 移除所有按钮的active类
+            document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+            // 添加当前按钮的active类
+            this.classList.add('active');
+            // 更新图表
+            updateReturnChart(this.dataset.period);
+        });
+    });
+
+    // 规模变动柱状图
+    const scaleChart = echarts.init(document.getElementById('scaleChart'));
+    scaleChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: Data_fluctuationScale.categories },
+        yAxis: { type: 'value', name: '规模 (亿元)' },
+        series: [{ type: 'bar', data: Data_fluctuationScale.series.map(s => s.y), itemStyle: { borderRadius: [8, 8, 0, 0] }, label: { show: true } }]
+    });
+
+    // 资产配置
+    const assetChart = echarts.init(document.getElementById('assetChart'));
+    assetChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: Data_assetAllocation.categories },
+        yAxis: { type: 'value', name: '占比 (%)' },
+        series: Data_assetAllocation.series.filter(s => s.name !== '净资产').map(s => ({ name: s.name, type: 'bar', stack: 'total', data: s.data }))
+    });
+
+    // 持有人结构
+    const holderChart = echarts.init(document.getElementById('holderChart'));
+    holderChart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: Data_holderStructure.categories },
+        yAxis: { type: 'value', name: '比例 (%)' },
+        series: Data_holderStructure.series.map(s => ({ name: s.name, type: 'bar', data: s.data, barGap: 0 }))
+    });
+
+    // ------------------ 模拟游戏逻辑 ------------------
+    const buySelect = document.getElementById('buyDateSelect');
+    const sellSelect = document.getElementById('sellDateSelect');
+    const investAmount = document.getElementById('investAmount');
+    const simulateBtn = document.getElementById('simulateBtn');
+
+    // 填充日期下拉
+    navData.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = dateLabels[idx];
+        buySelect.appendChild(opt);
+        sellSelect.appendChild(opt.cloneNode(true));
+    });
+    if (navData.length) {
+        buySelect.value = '0';
+        sellSelect.value = String(navData.length - 1);
+    }
+
+    function updateSimulation() {
+        const buyIdx = parseInt(buySelect.value);
+        const sellIdx = parseInt(sellSelect.value);
+        if (buyIdx >= sellIdx) { alert('卖出日期需晚于买入日期'); return; }
+        const buyNav = navData[buyIdx].nav;
+        const sellNav = navData[sellIdx].nav;
+        const amount = parseFloat(investAmount.value) || 0;
+        const shares = amount / buyNav;
+        const finalVal = shares * sellNav;
+        const profit = finalVal - amount;
+        const rate = (profit / amount) * 100;
+        document.getElementById('buyNav').innerHTML = buyNav.toFixed(4);
+        document.getElementById('sellNav').innerHTML = sellNav.toFixed(4);
+        document.getElementById('shares').innerHTML = shares.toFixed(2);
+        document.getElementById('finalValue').innerHTML = finalVal.toFixed(2);
+        const profitSpan = document.getElementById('profitAmount');
+        profitSpan.innerHTML = profit.toFixed(2);
+        profitSpan.className = `result-number ${profit >= 0 ? 'profit-positive' : 'profit-negative'}`;
+        const rateSpan = document.getElementById('profitRate');
+        rateSpan.innerHTML = rate.toFixed(2) + '%';
+        rateSpan.className = `result-number ${rate >= 0 ? 'profit-positive' : 'profit-negative'}`;
+    }
+
+    simulateBtn.addEventListener('click', updateSimulation);
+    buySelect.addEventListener('change', updateSimulation);
+    sellSelect.addEventListener('change', updateSimulation);
+    investAmount.addEventListener('input', updateSimulation);
+    updateSimulation();
+
+    // 调整窗口自适应
+    window.addEventListener('resize', () => {
+        [navChart, rankChart, returnChart, scaleChart, assetChart, holderChart].forEach(ch => ch?.resize());
+    });
+</script>
+</body>
+
+</html>
