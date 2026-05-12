@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>肉鸽菜园 小学生作业版</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0a2f1f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Press Start 2P', 'Courier New', monospace;
+            font-weight: bold;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 主游戏容器 - 带有精致边框和光效 */
+        .game-container {
+            background: rgba(0, 0, 0, 0.55);
+            border-radius: 48px;
+            padding: 20px;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 0 30px rgba(255,215,0,0.2);
+            border: 1px solid rgba(255,215,0,0.4);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 32px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 0 3px #f9e0a0, 0 0 0 6px #6b3e1c;
+            cursor: none;
+            background: #2c4a2e; /* fallback */
+        }
+
+        /* 游戏内HUD面板 - 现代化半透明 */
+        .stats-panel {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            background: rgba(10, 20, 8, 0.75);
+            backdrop-filter: blur(8px);
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #f9f2cf;
+            text-shadow: 2px 2px 0 #2c5a1a;
+            font-family: monospace;
+            letter-spacing: 1px;
+            border-left: 5px solid #ffd966;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats-panel span {
+            color: #ffb347;
+            font-size: 1.5rem;
+            margin: 0 4px;
+        }
+
+        /* 升级选择卡片 - 美化的浮层 */
+        .upgrade-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: monospace;
+            transition: 0.2s;
+        }
+
+        .upgrade-card {
+            background: #2c2418e6;
+            border-radius: 48px;
+            padding: 20px 25px;
+            width: 320px;
+            text-align: center;
+            border: 2px solid gold;
+            box-shadow: 0 20px 35px black, inset 0 1px 4px rgba(255,255,200,0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .upgrade-card h2 {
+            margin: 0 0 10px 0;
+            color: #ffe6a3;
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+        }
+
+        .upgrade-card p {
+            color: #c0e0b0;
+            margin-bottom: 20px;
+        }
+
+        .upgrade-options {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .upgrade-btn {
+            background: #4b3a2b;
+            border: none;
+            padding: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-family: monospace;
+            color: #fbe9c3;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.1s linear;
+            box-shadow: 0 4px 0 #1f150a;
+            letter-spacing: 1px;
+        }
+
+        .upgrade-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #1f150a;
+        }
+
+        .upgrade-btn:hover {
+            background: #6f543a;
+            color: white;
+        }
+
+        .gameover-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            font-family: monospace;
+        }
+
+        .gameover-card {
+            background: #1e1a14;
+            border-radius: 64px;
+            padding: 30px 40px;
+            text-align: center;
+            border: 3px solid #b8860b;
+            box-shadow: 0 0 30px rgba(255,100,0,0.5);
+        }
+
+        .gameover-card h1 {
+            font-size: 2.5rem;
+            color: #ff9966;
+            margin: 0 0 15px 0;
+        }
+
+        .gameover-card p {
+            font-size: 1.4rem;
+            color: #fadfaa;
+            margin: 8px;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            background: #5a3e2a;
+            border: none;
+            font-size: 1.3rem;
+            padding: 10px 32px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: #fff0c0;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 5px 0 #2c1c0e;
+        }
+
+        .restart-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #2c1c0e;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <canvas id="gameCanvas" width="1000" height="700"></canvas>
+</div>
+<div class="stats-panel" id="statsPanel">
+    🧺 击杀: <span id="killCount">0</span> &nbsp;&nbsp; 🌟 等级: <span id="levelVal">1</span>
+</div>
+
+<script>
+    (function(){
+        // ---------- 画布元素 ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ---------- 游戏核心参数 ----------
+        let gameRunning = true;
+        let animationId = null;
+        let upgradeChoiceActive = false;   // 是否显示升级选择菜单
+        let pendingUpgrade = null;         // 储存当前升级回调
+
+        // 玩家属性
+        let player = {
+            x: canvas.width/2,
+            y: canvas.height/2,
+            radius: 18,
+            hp: 100,
+            maxHp: 100,
+            attackDamage: 20,
+            attackCooldownMax: 0.65,   // 秒
+            attackTimer: 0,
+            speed: 300,                // 像素/秒
+            invincibleTimer: 0,
+            level: 1,
+            currentExp: 0,
+            expToNext: 10
+        };
+
+        // 动态输入移动 (WASD)
+        const keys = {
+            w: false, s: false, a: false, d: false
+        };
+
+        // 敌人数组
+        let enemies = [];
+        let lastTimestamp = 0;
+        let enemySpawnTimer = 0;
+        let spawnInterval = 1.4;   // 秒
+
+        // 击杀计数
+        let totalKills = 0;
+
+        // 用于随机背景偏移量 (摄像机随玩家移动而移动, 影响背景绘制偏移)
+        let cameraX = 0, cameraY = 0;
+
+        // -------------------- 随机生成背景纹理 (动态噪声风格) --------------------
+        // 创建一个离屏 canvas 作为随机纹理 (256x256 风格复古草地质感)
+        let bgPatternCanvas = document.createElement('canvas');
+        let bgCtx = bgPatternCanvas.getContext('2d');
+        bgPatternCanvas.width = 512;
+        bgPatternCanvas.height = 512;
+        
+        function generateRandomBackground() {
+            // 随机基底色 – 泥土/草地混合
+            const baseHue = 80 + Math.random() * 40; // 80~120 绿色范围
+            const baseSat = 45 + Math.random() * 30;
+            const baseLight = 35 + Math.random() * 20;
+            bgCtx.fillStyle = `hsl(${baseHue}, ${baseSat}%, ${baseLight}%)`;
+            bgCtx.fillRect(0, 0, 512, 512);
+            
+            // 随机噪点 + 像素草叶风格
+            for(let i = 0; i < 2800; i++) {
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                const size = 1 + Math.random() * 2;
+                const darkLight = Math.random() > 0.6 ? 20 : 60;
+                const r = Math.random() * 40 + 80;
+                const g = Math.random() * 70 + 100;
+                const b = Math.random() * 50 + 50;
+                bgCtx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                bgCtx.fillRect(x, y, size, size);
+            }
+            // 随机短线 (模仿草叶)
+            for(let i=0;i<800;i++){
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                bgCtx.beginPath();
+                bgCtx.moveTo(x, y);
+                bgCtx.lineTo(x+(Math.random()-0.5)*4, y-3-Math.random()*5);
+                bgCtx.strokeStyle = `rgba(60, 80, 30, 0.7)`;
+                bgCtx.lineWidth = 1.5;
+                bgCtx.stroke();
+            }
+            // 增加小花/亮色斑点
+            for(let i=0;i<400;i++){
+                bgCtx.fillStyle = `hsl(${Math.random()*360}, 70%, 65%)`;
+                bgCtx.beginPath();
+                bgCtx.arc(Math.random()*512, Math.random()*512, 1+Math.random()*2, 0, Math.PI*2);
+                bgCtx.fill();
+            }
+            // 返回平铺模式
+            return bgPatternCanvas;
+        }
+
+        let backgroundTile = generateRandomBackground();  // 初始随机纹理
+        
+        // 背景绘制函数 (根据摄像机偏移绘制无限平铺)
+        function drawScrollingBackground() {
+            if(!backgroundTile) return;
+            const tileW = backgroundTile.width;
+            const tileH = backgroundTile.height;
+            // 摄像机跟随玩家 (平滑跟随，背景滚动感)
+            // 偏移量基于玩家位置 - 画布中央, 产生反向移动感
+            let offsetX = (player.x - canvas.width/2) * 0.6;
+            let offsetY = (player.y - canvas.height/2) * 0.6;
+            // 限制偏移范围防止过于空旷
+            const startX = -tileW + (offsetX % tileW);
+            const startY = -tileH + (offsetY % tileH);
+            for(let i = startX; i < canvas.width + tileW; i += tileW) {
+                for(let j = startY; j < canvas.height + tileH; j += tileH) {
+                    ctx.drawImage(backgroundTile, i, j, tileW, tileH);
+                }
+            }
+            // 额外添加半透明雾气动态层 (随机飘浮小粒子进一步提升美感)
+            ctx.fillStyle = "rgba(170, 210, 120, 0.08)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // ---------- 辅助函数 ----------
+        function updateUI() {
+            document.getElementById('killCount').innerText = totalKills;
+            document.getElementById('levelVal').innerText = player.level;
+        }
+
+        // 增加经验，处理升级
+        function addExperience(amount) {
+            if(!gameRunning || upgradeChoiceActive) return;
+            player.currentExp += amount;
+            while(player.currentExp >= player.expToNext && !upgradeChoiceActive && gameRunning) {
+                player.currentExp -= player.expToNext;
+                player.level++;
+                // 升级时增加最大生命10%，回复20%生命
+                player.maxHp = Math.floor(80 + player.level * 8);
+                player.hp = Math.min(player.hp + 20, player.maxHp);
+                player.expToNext = Math.floor(25 + player.level * 4);
+                // 触发升级选择
+                showUpgradeOptions();
+                if(upgradeChoiceActive) break; // 等待选择
+            }
+            updateUI();
+        }
+        
+        // 显示升级卡片（美化浮动）
+        function showUpgradeOptions() {
+            if(upgradeChoiceActive) return;
+            upgradeChoiceActive = true;
+            gameRunning = false;  // 暂停游戏循环动态
+            if(animationId) cancelAnimationFrame(animationId);
+            
+            const overlayDiv = document.createElement('div');
+            overlayDiv.className = 'upgrade-overlay';
+            overlayDiv.innerHTML = `
+                <div class="upgrade-card">
+                    <h2>✨ 灵光乍现 ✨</h2>
+                    <p>菜园守护者，选择一项祝福</p>
+                    <div class="upgrade-options">
+                        <button class="upgrade-btn" data-upgrade="atk">⚔️ 攻击力 +5</button>
+                        <button class="upgrade-btn" data-upgrade="aspd">⚡ 攻击速度 +15%</button>
+                        <button class="upgrade-btn" data-upgrade="speed">👟 移动速度 +12%</button>
+                        <button class="upgrade-btn" data-upgrade="heal">💖 恢复 30% 生命</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlayDiv);
+            
+            const btns = overlayDiv.querySelectorAll('.upgrade-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = btn.getAttribute('data-upgrade');
+                    switch(type) {
+                        case 'atk': player.attackDamage += 5; break;
+                        case 'aspd': player.attackCooldownMax *= 0.85; break;
+                        case 'speed': player.speed *= 1.12; break;
+                        case 'heal': player.hp = Math.min(player.hp + player.maxHp * 0.3, player.maxHp); break;
+                    }
+                    overlayDiv.remove();
+                    upgradeChoiceActive = false;
+                    gameRunning = true;
+                    // 重启游戏循环
+                    lastTimestamp = performance.now();
+                    function gameLoop(now) {
+                        if(!gameRunning && !upgradeChoiceActive) return;
+                        if(upgradeChoiceActive) return;
+                        const delta = Math.min(0.033, (now - lastTimestamp) / 1000);
+                        if(delta <= 0) { lastTimestamp = now; requestAnimationFrame(gameLoop); return; }
+                        lastTimestamp = now;
+                        updateGame(delta);
+                        drawGame();
+                        if(gameRunning && !upgradeChoiceActive) requestAnimationFrame(gameLoop);
+                    }
+                    requestAnimationFrame(gameLoop);
+                });
+            });
+        }
+        
+        // 玩家受伤
+        function damagePlayer(amount) {
+            if(player.invincibleTimer > 0) return;
+            player.hp -= amount;
+            player.invincibleTimer = 0.65;
+            if(player.hp <= 0) {
+                player.hp = 0;
+                gameOver();
+            }
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            if(!gameRunning && upgradeChoiceActive) return;
+            gameRunning = false;
+            if(animationId) cancelAnimationFrame(animationId);
+            // 显示游戏结束界面
+            const gameoverDiv = document.createElement('div');
+            gameoverDiv.className = 'gameover-panel';
+            gameoverDiv.innerHTML = `
+                <div class="gameover-card">
+                    <h1>🥀 菜园失守 🥀</h1>
+                    <p>最终击杀数: <strong style="font-size:2rem;">${totalKills}</strong></p>
+                    <p>达到等级: ${player.level}</p>
+                    <button class="restart-btn" id="restartButton">🌱 重新开始 🌱</button>
+                </div>
+            `;
+            document.body.appendChild(gameoverDiv);
+            document.getElementById('restartButton').addEventListener('click', () => {
+                gameoverDiv.remove();
+                initGame();
+            });
+        }
+        
+        // 攻击机制: 自动攻击周围敌人 (圆形范围)
+        function performAttack() {
+            if(player.attackTimer > 0) return;
+            player.attackTimer = player.attackCooldownMax;
+            let hitCount = 0;
+            for(let i=0; i<enemies.length; i++) {
+                const e = enemies[i];
+                const dx = e.x - player.x;
+                const dy = e.y - player.y;
+                const dist = Math.hypot(dx, dy);
+                if(dist < 55) {  // 攻击范围
+                    e.hp -= player.attackDamage;
+                    hitCount++;
+                    if(e.hp <= 0) {
+                        enemies.splice(i,1);
+                        totalKills++;
+                        updateUI();
+                        addExperience(1);
+                        i--; 
+                    }
+                }
+            }
+            if(hitCount>0) {
+                // 轻微顿感特效
+            }
+        }
+        
+        // 生成敌人（随机属性）
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x,y;
+            const pad = 40;
+            if(side === 0) { x = Math.random() * canvas.width; y = -pad; }      // 上
+            else if(side === 2) { x = Math.random() * canvas.width; y = canvas.height+pad; } // 下
+            else if(side === 1) { x = canvas.width+pad; y = Math.random() * canvas.height; } // 右
+            else { x = -pad; y = Math.random() * canvas.height; } // 左
+            
+            let baseSpeed = 100 + player.level * 6;
+            let enemyHp = 25 + Math.floor(player.level * 3.5);
+            let damage = 12 + Math.floor(player.level * 2);
+            
+            enemies.push({
+                x: x, y: y, radius: 14,
+                hp: enemyHp,
+                maxHp: enemyHp,
+                speed: Math.min(210, baseSpeed),
+                damage: damage,
+                color: `hsl(${20 + Math.random() * 25}, 70%, 48%)`
+            });
+        }
+        
+        // 游戏逻辑更新
+        function updateGame(deltaTime) {
+            if(!gameRunning) return;
+            // invincible timer
+            if(player.invincibleTimer > 0) player.invincibleTimer -= deltaTime;
+            // 攻击cd
+            if(player.attackTimer > 0) player.attackTimer -= deltaTime;
+            
+            // 移动玩家
+            let moveX = 0, moveY = 0;
+            if(keys.w) moveY -= 1;
+            if(keys.s) moveY += 1;
+            if(keys.a) moveX -= 1;
+            if(keys.d) moveX += 1;
+            if(moveX !== 0 || moveY !== 0) {
+                const len = Math.hypot(moveX, moveY);
+                moveX /= len; moveY /= len;
+                let newX = player.x + moveX * player.speed * deltaTime;
+                let newY = player.y + moveY * player.speed * deltaTime;
+                // 边界限制
+                player.x = Math.min(Math.max(newX, 25), canvas.width-25);
+                player.y = Math.min(Math.max(newY, 25), canvas.height-25);
+            }
+            
+            // 自动攻击（每帧判定cd，加快手感）
+            performAttack();
+            
+            // 敌人移动 + 碰撞玩家
+            for(let i=0; i<enemies.length; i++) {
+                const e = enemies[i];
+                const dx = player.x - e.x;
+                const dy = player.y - e.y;
+                const dist = Math.hypot(dx, dy);
+                if(dist > 0.01) {
+                    const move = Math.min(e.speed * deltaTime, dist - 5);
+                    e.x += (dx / dist) * move;
+                    e.y += (dy / dist) * move;
+                }
+                // 碰撞玩家伤害
+                if(Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
+                    damagePlayer(e.damage);
+                    // 反震击退
+                    const angle = Math.atan2(e.y - player.y, e.x - player.x);
+                    player.x -= Math.cos(angle) * 18;
+                    player.y -= Math.sin(angle) * 18;
+                    player.x = Math.min(Math.max(player.x, 15), canvas.width-15);
+                    player.y = Math.min(Math.max(player.y, 15), canvas.height-15);
+                    // 敌人弹开
+                    e.x += Math.cos(angle) * 20;
+                    e.y += Math.sin(angle) * 20;
+                    // 边界裁剪
+                    e.x = Math.min(Math.max(e.x, -20), canvas.width+20);
+                    e.y = Math.min(Math.max(e.y, -20), canvas.height+20);
+                    if(player.hp <= 0) gameOver();
+                }
+            }
+            
+            // 敌人生成计时
+            enemySpawnTimer += deltaTime;
+            let currentSpawnGap = Math.max(0.6, spawnInterval - player.level * 0.04);
+            if(enemySpawnTimer >= currentSpawnGap && enemies.length < 48 && gameRunning) {
+                enemySpawnTimer = 0;
+                spawnEnemy();
+                if(Math.random() < 0.25 + player.level*0.02) spawnEnemy(); // 双倍偶尔
+            }
+        }
+        
+        // 绘图层 (美化界面核心)
+        function drawGame() {
+            if(!ctx) return;
+            // 1. 动态滚动随机背景
+            drawScrollingBackground();
+            
+            // 绘制半透明网格/草地辅助纹路
+            ctx.save();
+            // 2. 绘制敌人 (带光泽)
+            for(let e of enemies) {
+                // 阴影
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+                ctx.fillStyle = e.color;
+                ctx.fill();
+                ctx.shadowBlur = 2;
+                ctx.beginPath();
+                ctx.arc(e.x-2, e.y-2, 4, 0, Math.PI*2);
+                ctx.fillStyle = "#ffdd99";
+                ctx.fill();
+                ctx.fillStyle = "white";
+                ctx.font = "bold 12 monospace";
+                ctx.shadowBlur = 0;
+                ctx.fillText(`❤️${e.hp}`, e.x-12, e.y-8);
+                // 眼睛
+                ctx.fillStyle = "#000";
+                ctx.beginPath();
+                ctx.arc(e.x-5, e.y-3, 2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(e.x+3, e.y-3, 2, 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            // 3. 玩家角色 (帅气园丁)
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
+            ctx.fillStyle = "#a7e06e";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x-3, player.y-4, 5, 0, Math.PI*2);
+            ctx.fillStyle = "#fcd893";
+            ctx.fill();
+            ctx.fillStyle = "#3f2b1d";
+            ctx.beginPath();
+            ctx.ellipse(player.x+2, player.y-2, 2, 3, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = "#4a2e1e";
+            ctx.beginPath();
+            ctx.ellipse(player.x-4, player.y-2, 2, 3, 0, 0, Math.PI*2);
+            ctx.fill();
+            // 草帽
+            ctx.fillStyle = "#b87c4f";
+            ctx.beginPath();
+            ctx.ellipse(player.x, player.y-12, 15, 8, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = "#e7b42c";
+            ctx.fillRect(player.x-2, player.y-6, 4, 8);
+            // 攻击范围指示器
+            if(player.attackTimer <= 0.1) {
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 52, 0, Math.PI*2);
+                ctx.strokeStyle = "#ffd966";
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 6;
+                ctx.stroke();
+            }
+            // 血条
+            ctx.shadowBlur = 0;
+            const hpPercent = player.hp/player.maxHp;
+            ctx.fillStyle = "#631d1d";
+            ctx.fillRect(player.x-22, player.y-20, 44, 8);
+            ctx.fillStyle = "#bff27e";
+            ctx.fillRect(player.x-22, player.y-20, 44 * hpPercent, 8);
+            
+            // 经验条
+            const expPercent = player.currentExp / player.expToNext;
+            ctx.fillStyle = "#3a2a1f";
+            ctx.fillRect(player.x-22, player.y-12, 44, 6);
+            ctx.fillStyle = "#c5a63d";
+            ctx.fillRect(player.x-22, player.y-12, 44 * expPercent, 6);
+            
+            // 显示攻击力/攻速简单数值
+            ctx.font = "bold 14px monospace";
+            ctx.fillStyle = "#fef0b0";
+            ctx.fillText(`⚔️${player.attackDamage}`, player.x-18, player.y-28);
+            ctx.restore();
+            
+            // 特效文字: 升级提醒/子弹时间
+            if(!gameRunning && upgradeChoiceActive) {
+                ctx.font = "28px monospace";
+                ctx.fillStyle = "#fffbba";
+                ctx.shadowBlur = 0;
+                ctx.fillText("⚡ 选择强化 ⚡", canvas.width/2-100, 80);
+            }
+        }
+        
+        // ---------- 重置游戏 ----------
+        function initGame() {
+            if(animationId) cancelAnimationFrame(animationId);
+            // 重置状态
+            gameRunning = true;
+            upgradeChoiceActive = false;
+            totalKills = 0;
+            enemies = [];
+            player = {
+                x: canvas.width/2, y: canvas.height/2, radius: 18,
+                hp: 100, maxHp: 100, attackDamage: 20, attackCooldownMax: 0.65,
+                attackTimer: 0, speed: 300, invincibleTimer: 0, level: 1,
+                currentExp: 0, expToNext: 10
+            };
+            enemySpawnTimer = 0;
+            updateUI();
+            // 重新生成随机背景纹理 (每次重启背景会不同)
+            backgroundTile = generateRandomBackground();
+            // 干净移除可能残留的浮层
+            document.querySelectorAll('.upgrade-overlay, .gameover-panel').forEach(el=>el.remove());
+            lastTimestamp = performance.now();
+            
+            function mainLoop(now) {
+                if(!gameRunning || upgradeChoiceActive) {
+                    if(!upgradeChoiceActive && !gameRunning) return;
+                    if(upgradeChoiceActive) { requestAnimationFrame(mainLoop); return; }
+                    return;
+                }
+                const delta = Math.min(0.033, (now - lastTimestamp) / 1000);
+                if(delta <= 0) { lastTimestamp = now; requestAnimationFrame(mainLoop); return; }
+                lastTimestamp = now;
+                updateGame(delta);
+                drawGame();
+                requestAnimationFrame(mainLoop);
+            }
+            animationId = requestAnimationFrame(mainLoop);
+        }
+        
+        // 键盘事件
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if(key === 'w') keys.w = true;
+            if(key === 's') keys.s = true;
+            if(key === 'a') keys.a = true;
+            if(key === 'd') keys.d = true;
+            if(key === ' ' && gameRunning && !upgradeChoiceActive) {
+                performAttack(); // 手动点击额外攻击感，但自动攻击也有cd
+            }
+            e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if(key === 'w') keys.w = false;
+            if(key === 's') keys.s = false;
+            if(key === 'a') keys.a = false;
+            if(key === 'd') keys.d = false;
+        });
+        
+        // 锁定触摸右键菜单等
+        canvas.addEventListener('contextmenu', (e)=> e.preventDefault());
+        initGame();
+    })();
+</script>
+</body>
+</html>
