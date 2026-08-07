@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<!--这个页面因为涉及到的css样式太多了，脚本也是空前复杂，所以也是只写在同一个文件中-->
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel 表格 </title>
+    <style>
+        /* ===== 全局重置 & 字体 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #e9edf2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ===== 主容器 ===== */
+        .excel-wrapper {
+            /* width: 1300px; */
+            /* max-width: 98vw; */
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 95vh;
+            min-height: 650px;
+        }
+
+        /* ===== 顶部标题栏 ===== */
+        .excel-titlebar {
+            background: #2d3c4b;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .excel-titlebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .excel-titlebar .logo .icon {
+            background: #1d7a3e;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+        .excel-titlebar .window-controls {
+            display: flex;
+            gap: 6px;
+        }
+        .excel-titlebar .window-controls span {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #5a6b7c;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .excel-titlebar .window-controls span:hover {
+            filter: brightness(1.3);
+        }
+        .excel-titlebar .window-controls .min {
+            background: #f5a623;
+        }
+        .excel-titlebar .window-controls .max {
+            background: #4caf50;
+        }
+        .excel-titlebar .window-controls .close {
+            background: #e74c3c;
+        }
+
+        /* ===== 菜单栏 ===== */
+        .excel-menubar {
+            background: #f3f5f7;
+            padding: 2px 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-bottom: 1px solid #d6dce3;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .excel-menubar .menu-item {
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-weight: 500;
+        }
+        .excel-menubar .menu-item:hover {
+            background: #e1e6ed;
+        }
+        .excel-menubar .menu-item.active {
+            background: #d0d7e2;
+        }
+
+        /* ===== 工具栏 ===== */
+        .excel-toolbar {
+            background: #fafbfc;
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid #d6dce3;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 0 6px;
+            border-right: 1px solid #d6dce3;
+        }
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+        .toolbar-group .label {
+            font-size: 11px;
+            color: #666;
+            padding-right: 4px;
+            font-weight: 500;
+        }
+        .tool-btn {
+            padding: 4px 8px;
+            font-size: 13px;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #333;
+            transition: 0.15s;
+            min-width: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .tool-btn:hover {
+            background: #e8ecf1;
+            border-color: #c8ced6;
+        }
+        .tool-btn.active {
+            background: #d0d7e2;
+            border-color: #b0b8c4;
+        }
+        .tool-btn .icon {
+            font-size: 15px;
+            display: block;
+            line-height: 1.2;
+        }
+        .tool-btn .label {
+            font-size: 10px;
+            display: block;
+            color: #555;
+        }
+        .tool-btn.btn-text .icon {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .font-size-select {
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 12px;
+            background: #fff;
+            cursor: pointer;
+            outline: none;
+        }
+        .font-size-select:focus {
+            border-color: #1a73e8;
+        }
+        #symbolInput {
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            padding: 4px 8px;
+            border: 1px solid #d0d4da;
+            border-radius: 3px;
+            font-size: 13px;
+            outline: none;
+            min-width: 200px;
+        }
+        #symbolInput:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        .color-picker-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .color-picker-wrap input[type="color"] {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            padding: 2px;
+            background: #fff;
+        }
+        .color-picker-wrap input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-picker-wrap input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 2px;
+        }
+
+        /* ===== 公式栏 ===== */
+        .excel-formula {
+            background: #fff;
+            padding: 3px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #d6dce3;
+            flex-shrink: 0;
+        }
+        .excel-formula .cell-address {
+            background: #f3f5f7;
+            padding: 2px 10px;
+            border: 1px solid #d0d4da;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a3b5d;
+            min-width: 60px;
+            text-align: center;
+            font-family: 'Consolas', monospace;
+        }
+        .excel-formula .formula-input {
+            flex: 1;
+            padding: 3px 10px;
+            border: 1px solid #d0d4da;
+            border-radius: 3px;
+            font-size: 14px;
+            outline: none;
+            font-family: 'Segoe UI', sans-serif;
+            transition: 0.15s;
+            min-height: 30px;
+        }
+        .excel-formula .formula-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        .excel-formula .fx-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* ===== 表格容器 ===== */
+        .excel-grid-wrapper {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #fff;
+        }
+        .excel-grid-wrapper::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .excel-grid-wrapper::-webkit-scrollbar-track {
+            background: #f1f3f6;
+        }
+        .excel-grid-wrapper::-webkit-scrollbar-thumb {
+            background: #c8ced6;
+            border-radius: 6px;
+        }
+        .excel-grid-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #b0b8c4;
+        }
+
+        .excel-grid {
+            display: inline-block;
+            min-width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        .excel-grid table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: auto;
+        }
+        .excel-grid th,
+        .excel-grid td {
+            border: 1px solid #d0d4da;
+            text-align: center;
+            font-size: 13px;
+            padding: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* 列标题 */
+        .excel-grid .col-header {
+            background: #f3f5f7;
+            font-weight: 600;
+            color: #3d4a5a;
+            height: 26px;
+            min-width: 68px;
+            max-width: 68px;
+            width: 68px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #c8ced6;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.1s;
+        }
+        .excel-grid .col-header:hover {
+            background: #e8ecf1;
+        }
+        .excel-grid .col-header.highlight {
+            background: #d0d7e2;
+        }
+
+        /* 行标题 */
+        .excel-grid .row-header {
+            background: #f3f5f7;
+            font-weight: 600;
+            color: #3d4a5a;
+            height: 26px;
+            min-width: 40px;
+            max-width: 40px;
+            width: 40px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            border-right: 2px solid #c8ced6;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.1s;
+        }
+        .excel-grid .row-header:hover {
+            background: #e8ecf1;
+        }
+        .excel-grid .row-header.highlight {
+            background: #d0d7e2;
+        }
+
+        /* 左上角全选按钮 */
+        .excel-grid .corner {
+            background: #f3f5f7;
+            min-width: 40px;
+            max-width: 40px;
+            width: 40px;
+            height: 26px;
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            border-right: 2px solid #c8ced6;
+            border-bottom: 2px solid #c8ced6;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .excel-grid .corner:hover {
+            background: #e8ecf1;
+        }
+        .excel-grid .corner::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: #a0aab8;
+            clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+        }
+
+        /* 单元格 */
+        .excel-grid .cell {
+            height: 26px;
+            min-width: 68px;
+            max-width: 68px;
+            width: 68px;
+            padding: 0 4px;
+            text-align: left;
+            cursor: cell;
+            background: #fff;
+            transition: background 0.05s;
+            font-size: 13px;
+            color: #222;
+            outline: none;
+            position: relative;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            vertical-align: middle;
+        }
+        .excel-grid .cell .cell-content {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* 选中单元格 */
+        .excel-grid .cell.selected {
+            outline: 2px solid #1a73e8;
+            outline-offset: -1px;
+            z-index: 5;
+            position: relative;
+            background: #e8f0fe;
+        }
+        .excel-grid .cell .cell-content.bold {
+            font-weight: 700;
+        }
+        .excel-grid .cell .cell-content.italic {
+            font-style: italic;
+        }
+        .excel-grid .cell .cell-content.underline {
+            text-decoration: underline;
+        }
+        .excel-grid .cell .cell-content.align-left {
+            justify-content: flex-start;
+        }
+        .excel-grid .cell .cell-content.align-center {
+            justify-content: center;
+        }
+        .excel-grid .cell .cell-content.align-right {
+            justify-content: flex-end;
+        }
+
+        /* ===== 底部状态栏 ===== */
+        .excel-footer {
+            background: #f3f5f7;
+            border-top: 1px solid #d6dce3;
+            padding: 3px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 36px;
+        }
+        .excel-footer .sheet-tabs {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .excel-footer .sheet-tab {
+            padding: 2px 16px;
+            font-size: 12px;
+            color: #444;
+            background: transparent;
+            border: 1px solid transparent;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            border-radius: 3px 3px 0 0;
+            transition: 0.15s;
+            font-weight: 500;
+        }
+        .excel-footer .sheet-tab:hover {
+            background: #e8ecf1;
+        }
+        .excel-footer .sheet-tab.active {
+            background: #fff;
+            border-color: #d0d4da;
+            border-bottom-color: #1a73e8;
+            color: #1a3b5d;
+        }
+        .excel-footer .sheet-tab .add-sheet {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1a73e8;
+        }
+        .excel-footer .status {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .excel-footer .status .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 4px;
+        }
+
+        /* ===== 右键菜单 ===== */
+        .context-menu {
+            position: fixed;
+            background: #fff;
+            border: 1px solid #d0d4da;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+            padding: 4px 0;
+            min-width: 160px;
+            z-index: 999;
+            display: none;
+        }
+        .context-menu .menu-item {
+            padding: 6px 18px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .context-menu .menu-item:hover {
+            background: #e8ecf1;
+        }
+        .context-menu .divider {
+            height: 1px;
+            background: #e0e4ea;
+            margin: 4px 10px;
+        }
+
+        /* ===== 滚动条样式优化 ===== */
+        .excel-grid-wrapper {
+            scroll-behavior: smooth;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .excel-wrapper {
+                height: 96vh;
+                min-height: 500px;
+                border-radius: 4px;
+            }
+            .excel-grid .col-header,
+            .excel-grid .cell {
+                min-width: 52px;
+                max-width: 52px;
+                width: 52px;
+            }
+            .excel-grid .row-header,
+            .excel-grid .corner {
+                min-width: 32px;
+                max-width: 32px;
+                width: 32px;
+            }
+            .excel-titlebar .logo span {
+                display: none;
+            }
+            .toolbar-group .label {
+                display: none;
+            }
+            .excel-menubar .menu-item {
+                font-size: 12px;
+                padding: 3px 8px;
+            }
+        }
+        @media (max-width: 600px) {
+            .excel-grid .col-header,
+            .excel-grid .cell {
+                min-width: 44px;
+                max-width: 44px;
+                width: 44px;
+                font-size: 11px;
+            }
+            .excel-grid .row-header,
+            .excel-grid .corner {
+                min-width: 28px;
+                max-width: 28px;
+                width: 28px;
+                font-size: 10px;
+            }
+            .excel-formula .formula-input {
+                font-size: 12px;
+            }
+            .excel-formula .cell-address {
+                font-size: 11px;
+                min-width: 44px;
+            }
+            .tool-btn {
+                padding: 2px 5px;
+                font-size: 12px;
+            }
+            .excel-footer .sheet-tab {
+                padding: 1px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* ===== 额外工具类 ===== */
+        .hidden {
+            display: none !important;
+        }
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 滚动条占位 */
+        .excel-grid-wrapper .scroll-placeholder {
+            display: none;
+        }
+
+        /* 单元格编辑状态 */
+        .excel-grid .cell.editing {
+            outline: 2px solid #1a73e8;
+            outline-offset: -1px;
+            background: #fff;
+            z-index: 6;
+        }
+        .excel-grid .cell.editing .cell-content {
+            opacity: 0;
+        }
+        .excel-grid .cell .cell-editor {
+            display: none;
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            width: calc(100% + 2px);
+            height: calc(100% + 2px);
+            border: none;
+            outline: none;
+            padding: 0 4px;
+            font-size: 13px;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: #fff;
+            z-index: 7;
+            border-radius: 0;
+        }
+        .excel-grid .cell.editing .cell-editor {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 主容器 ===== -->
+    <div class="excel-wrapper">
+
+        <!-- 标题栏 -->
+        <div class="excel-titlebar">
+            <div class="logo">
+                <div class="icon">X</div>
+                <span>Excel</span>
+            </div>
+            <div class="window-controls">
+                <span class="min" title="最小化"></span>
+                <span class="max" title="最大化"></span>
+                <span class="close" title="关闭"></span>
+            </div>
+        </div>
+
+        <!-- 菜单栏 -->
+        <div class="excel-menubar">
+            <span class="menu-item active">文件</span>
+            <span class="menu-item">开始</span>
+            <span class="menu-item">插入</span>
+            <span class="menu-item">页面布局</span>
+            <span class="menu-item">公式</span>
+            <span class="menu-item">数据</span>
+            <span class="menu-item">审阅</span>
+            <span class="menu-item">视图</span>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="excel-toolbar" id="toolbar">
+            <!-- 字体 -->
+            <div class="toolbar-group">
+                <span class="label">字体</span>
+                <select class="font-size-select" id="fontSize">
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12" selected>12</option>
+                    <option value="14">14</option>
+                    <option value="16">16</option>
+                    <option value="18">18</option>
+                    <option value="20">20</option>
+                    <option value="24">24</option>
+                    <option value="28">28</option>
+                    <option value="36">36</option>
+                </select>
+            </div>
+            <!-- 样式 -->
+            <div class="toolbar-group">
+                <button class="tool-btn" data-action="bold" title="加粗"><span class="icon"><b>B</b></span></button>
+                <button class="tool-btn" data-action="italic" title="斜体"><span class="icon"><i>I</i></span></button>
+                <button class="tool-btn" data-action="underline" title="下划线"><span class="icon"><u>U</u></span></button>
+            </div>
+            <!-- 对齐 -->
+            <div class="toolbar-group">
+                <button class="tool-btn active" data-action="align-left" title="左对齐"><span class="icon">≡</span></button>
+                <button class="tool-btn" data-action="align-center" title="居中"><span class="icon">≡</span></button>
+                <button class="tool-btn" data-action="align-right" title="右对齐"><span class="icon">≡</span></button>
+            </div>
+            <!-- 颜色 -->
+            <div class="toolbar-group">
+                <div class="color-picker-wrap" title="字体颜色">
+                    <input type="color" id="fontColor" value="#222222" />
+                </div>
+                <div class="color-picker-wrap" title="填充颜色">
+                    <input type="color" id="fillColor" value="#ffffff" />
+                </div>
+            </div>
+            <!-- 其他 -->
+            <div class="toolbar-group">
+                <button class="tool-btn" data-action="clear" title="清除内容"><span class="icon">✕</span></button>
+            </div>
+
+            <!-- 数据搜索框 -->
+            <div class="toolbar-group">
+                <input type="text" id="symbolInput" value="002708.SZ, 601857.SH, 03696.HK, 601636.SH, 002582.SZ" placeholder="搜索。。。" spellcheck="false">
+                <button id="queryBtn">🔍</button>
+            </div>
+
+            <div class="status" id="statusMsg">就绪，点击查询</div>
+        </div>
+
+        <!-- 公式栏 -->
+        <div class="excel-formula">
+            <span class="fx-label">fx</span>
+            <span class="cell-address" id="cellAddress">A1</span>
+            <input class="formula-input" id="formulaInput" placeholder="输入数据或公式..." spellcheck="false" />
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="excel-grid-wrapper" id="gridWrapper">
+            <div class="excel-grid" id="excelGrid">
+                <table id="gridTable">
+                    <thead id="gridHead"></thead>
+                    <tbody id="gridBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 底部状态栏 -->
+        <div class="excel-footer">
+            <div class="sheet-tabs" id="sheetTabs">
+                <span class="sheet-tab active" data-sheet="0">Sheet1</span>
+                <span class="sheet-tab" data-sheet="1">Sheet2</span>
+                <span class="sheet-tab" data-sheet="2">Sheet3</span>
+                <span class="sheet-tab" data-sheet="new" style="font-weight:700;color:#1a73e8;">+</span>
+            </div>
+            <div class="status">
+                <span><span class="dot"></span>就绪</span>
+                <span id="statusCell">单元格: A1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 右键菜单 ===== -->
+    <div class="context-menu" id="contextMenu">
+        <div class="menu-item" data-action="copy">复制</div>
+        <div class="menu-item" data-action="paste">粘贴</div>
+        <div class="menu-item" data-action="cut">剪切</div>
+        <div class="divider"></div>
+        <div class="menu-item" data-action="clear">清除内容</div>
+        <div class="divider"></div>
+        <div class="menu-item" data-action="insert-row">插入行</div>
+        <div class="menu-item" data-action="delete-row">删除行</div>
+        <div class="menu-item" data-action="insert-col">插入列</div>
+        <div class="menu-item" data-action="delete-col">删除列</div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  JavaScript 核心逻辑
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            // ---------- 配置 ----------
+            const ROWS = 50;
+            const COLS = 26;
+            const COL_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+            // ---------- 状态 ----------
+            let cellData = {}; // key: "A1", value: { value, bold, italic, underline, align, color, bgColor, fontSize }
+            let selectedRow = 0; // 0-based
+            let selectedCol = 0; // 0-based
+            let clipboard = null; // 用于复制粘贴
+            let isEditing = false;
+
+            // DOM 引用
+            const gridHead = document.getElementById('gridHead');
+            const gridBody = document.getElementById('gridBody');
+            const cellAddress = document.getElementById('cellAddress');
+            const formulaInput = document.getElementById('formulaInput');
+            const gridWrapper = document.getElementById('gridWrapper');
+            const contextMenu = document.getElementById('contextMenu');
+            const statusCell = document.getElementById('statusCell');
+
+            // 获取数据
+            const API_KEY = 'tk_3b0da1e075644c7790b739d2e38d1c21';
+            const BASE_URL = 'https://api.tickflow.org/v1/quotes';
+            const symbolInput = document.getElementById('symbolInput');
+            const queryBtn = document.getElementById('queryBtn');
+            const statusMsg = document.getElementById('statusMsg');
+
+            // 工具函数: 列索引转字母
+            function colToLetter(idx) {
+                let s = '';
+                let n = idx + 1;
+                while (n > 0) {
+                    n--;
+                    s = String.fromCharCode(65 + (n % 26)) + s;
+                    n = Math.floor(n / 26);
+                }
+                return s;
+            }
+
+            // 工具函数: 字母转列索引
+            function letterToCol(letter) {
+                let idx = 0;
+                for (let i = 0; i < letter.length; i++) {
+                    idx = idx * 26 + (letter.charCodeAt(i) - 64);
+                }
+                return idx - 1;
+            }
+
+            // 获取单元格key
+            function cellKey(row, col) {
+                return colToLetter(col) + (row + 1);
+            }
+
+            // 解析单元格key
+            function parseCellKey(key) {
+                const match = key.match(/^([A-Z]+)(\d+)$/);
+                if (!match) return null;
+                const col = letterToCol(match[1]);
+                const row = parseInt(match[2]) - 1;
+                return { row, col };
+            }
+
+            // 获取单元格数据（若无则返回默认）
+            function getCellData(row, col) {
+                const key = cellKey(row, col);
+                if (cellData[key]) return cellData[key];
+                return { value: '', bold: false, italic: false, underline: false, align: 'left', color: '#222222',
+                    bgColor: '#ffffff', fontSize: 12 };
+            }
+
+            // 设置单元格数据
+            function setCellData(row, col, data) {
+                const key = cellKey(row, col);
+                if (data.value === '' && !data.bold && !data.italic && !data.underline && data.align === 'left' &&
+                    data.color === '#222222' && data.bgColor === '#ffffff' && data.fontSize === 12) {
+                    delete cellData[key];
+                } else {
+                    cellData[key] = data;
+                }
+            }
+
+            // 获取单元格显示文本
+            function getCellDisplay(row, col) {
+                const d = getCellData(row, col);
+                return d.value || '';
+            }
+
+            // ---------- 渲染表格 ----------
+            function renderGrid() {
+                // 构建表头 (列标题)
+                let theadHtml = '<tr><th class="corner"></th>';
+                for (let c = 0; c < COLS; c++) {
+                    const letter = colToLetter(c);
+                    theadHtml += `<th class="col-header" data-col="${c}">${letter}</th>`;
+                }
+                theadHtml += '</tr>';
+                gridHead.innerHTML = theadHtml;
+
+                // 构建表体
+                let tbodyHtml = '';
+                for (let r = 0; r < ROWS; r++) {
+                    tbodyHtml += `<tr data-row="${r}">`;
+                    tbodyHtml += `<th class="row-header" data-row="${r}">${r + 1}</th>`;
+                    for (let c = 0; c < COLS; c++) {
+                        const key = cellKey(r, c);
+                        const data = getCellData(r, c);
+                        const val = data.value || '';
+                        let cls = 'cell';
+                        if (r === selectedRow && c === selectedCol) cls += ' selected';
+                        let style = '';
+                        let contentStyle = '';
+                        // 样式类
+                        let contentCls = 'cell-content';
+                        if (data.bold) contentCls += ' bold';
+                        if (data.italic) contentCls += ' italic';
+                        if (data.underline) contentCls += ' underline';
+                        if (data.align) contentCls += ' align-' + data.align;
+                        // 内联样式
+                        const color = data.color || '#222222';
+                        const bgColor = data.bgColor || '#ffffff';
+                        const fontSize = data.fontSize || 12;
+                        style += `color:${color};background:${bgColor};font-size:${fontSize}px;`;
+                        // 转义
+                        const escapedVal = val.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        tbodyHtml +=
+                            `<td class="${cls}" data-row="${r}" data-col="${c}" style="${style}"><div class="${contentCls}" style="${style}">${escapedVal}</div><input class="cell-editor" type="text" /></td>`;
+                    }
+                    tbodyHtml += '</tr>';
+                }
+                gridBody.innerHTML = tbodyHtml;
+
+                // 更新高亮行列
+                updateHighlight();
+                updateAddress();
+                updateStatus();
+                updateToolbarState();
+            }
+
+            // ---------- 更新高亮 ----------
+            function updateHighlight() {
+                // 清除所有高亮
+                document.querySelectorAll('.col-header.highlight').forEach(el => el.classList.remove('highlight'));
+                document.querySelectorAll('.row-header.highlight').forEach(el => el.classList.remove('highlight'));
+                // 高亮当前列
+                const colHeaders = document.querySelectorAll('.col-header');
+                if (colHeaders[selectedCol]) colHeaders[selectedCol].classList.add('highlight');
+                // 高亮当前行
+                const rowHeaders = document.querySelectorAll('.row-header');
+                if (rowHeaders[selectedRow]) rowHeaders[selectedRow].classList.add('highlight');
+                // 选中单元格
+                document.querySelectorAll('.cell.selected').forEach(el => el.classList.remove('selected'));
+                const cells = document.querySelectorAll('.cell');
+                const idx = selectedRow * COLS + selectedCol;
+                if (cells[idx]) cells[idx].classList.add('selected');
+            }
+
+            // ---------- 更新地址栏 ----------
+            function updateAddress() {
+                const addr = colToLetter(selectedCol) + (selectedRow + 1);
+                cellAddress.textContent = addr;
+                statusCell.textContent = '单元格: ' + addr;
+            }
+
+            // ---------- 更新状态 ----------
+            function updateStatus() {
+                const data = getCellData(selectedRow, selectedCol);
+                formulaInput.value = data.value || '';
+            }
+
+            // ---------- 更新工具栏状态 ----------
+            function updateToolbarState() {
+                const data = getCellData(selectedRow, selectedCol);
+                document.querySelectorAll('[data-action="bold"]').forEach(el => el.classList.toggle('active', data.bold));
+                document.querySelectorAll('[data-action="italic"]').forEach(el => el.classList.toggle('active', data
+                .italic));
+                document.querySelectorAll('[data-action="underline"]').forEach(el => el.classList.toggle('active', data
+                    .underline));
+                document.querySelectorAll('[data-action="align-left"]').forEach(el => el.classList.toggle('active', data
+                    .align === 'left'));
+                document.querySelectorAll('[data-action="align-center"]').forEach(el => el.classList.toggle('active', data
+                    .align === 'center'));
+                document.querySelectorAll('[data-action="align-right"]').forEach(el => el.classList.toggle('active', data
+                    .align === 'right'));
+                document.getElementById('fontColor').value = data.color || '#222222';
+                document.getElementById('fillColor').value = data.bgColor || '#ffffff';
+                document.getElementById('fontSize').value = data.fontSize || 12;
+            }
+
+            // ---------- 更新单元格内容 (从数据重新渲染) ----------
+            function updateCell(row, col) {
+                const data = getCellData(row, col);
+                const cells = document.querySelectorAll('.cell');
+                const idx = row * COLS + col;
+                if (!cells[idx]) return;
+                const td = cells[idx];
+                const contentDiv = td.querySelector('.cell-content');
+                if (!contentDiv) return;
+                const val = data.value || '';
+                contentDiv.textContent = val;
+                // 样式
+                let cls = 'cell-content';
+                if (data.bold) cls += ' bold';
+                if (data.italic) cls += ' italic';
+                if (data.underline) cls += ' underline';
+                if (data.align) cls += ' align-' + data.align;
+                contentDiv.className = cls;
+                const color = data.color || '#222222';
+                const bgColor = data.bgColor || '#ffffff';
+                const fontSize = data.fontSize || 12;
+                contentDiv.style.color = color;
+                contentDiv.style.background = bgColor;
+                contentDiv.style.fontSize = fontSize + 'px';
+                td.style.color = color;
+                td.style.background = bgColor;
+                td.style.fontSize = fontSize + 'px';
+                // 如果当前是选中状态，保持选中样式
+                if (row === selectedRow && col === selectedCol) {
+                    td.classList.add('selected');
+                }
+                // 更新公式栏
+                if (row === selectedRow && col === selectedCol) {
+                    formulaInput.value = val;
+                }
+            }
+
+            // ---------- 选中单元格 ----------
+            function selectCell(row, col, focusInput = false) {
+                if (row < 0) row = 0;
+                if (row >= ROWS) row = ROWS - 1;
+                if (col < 0) col = 0;
+                if (col >= COLS) col = COLS - 1;
+                // 如果正在编辑，先保存
+                if (isEditing) {
+                    saveEdit();
+                }
+                selectedRow = row;
+                selectedCol = col;
+                renderGrid();
+                // 滚动到可见
+                const cellEl = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                if (cellEl) {
+                    cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                }
+                updateAddress();
+                updateStatus();
+                updateToolbarState();
+                if (focusInput) {
+                    formulaInput.focus();
+                    formulaInput.select();
+                }
+            }
+
+            // ---------- 保存编辑 ----------
+            function saveEdit() {
+                const val = formulaInput.value;
+                const data = getCellData(selectedRow, selectedCol);
+                data.value = val;
+                setCellData(selectedRow, selectedCol, data);
+                updateCell(selectedRow, selectedCol);
+                isEditing = false;
+                // 退出编辑状态
+                document.querySelectorAll('.cell.editing').forEach(el => el.classList.remove('editing'));
+            }
+
+            // ---------- 应用样式到当前单元格 ----------
+            function applyStyle(prop, value) {
+                const data = getCellData(selectedRow, selectedCol);
+                data[prop] = value;
+                setCellData(selectedRow, selectedCol, data);
+                updateCell(selectedRow, selectedCol);
+                updateToolbarState();
+            }
+
+            // ---------- 切换样式 (布尔) ----------
+            function toggleStyle(prop) {
+                const data = getCellData(selectedRow, selectedCol);
+                data[prop] = !data[prop];
+                setCellData(selectedRow, selectedCol, data);
+                updateCell(selectedRow, selectedCol);
+                updateToolbarState();
+            }
+
+            // ---------- 设置对齐 ----------
+            function setAlign(align) {
+                const data = getCellData(selectedRow, selectedCol);
+                data.align = align;
+                setCellData(selectedRow, selectedCol, data);
+                updateCell(selectedRow, selectedCol);
+                updateToolbarState();
+            }
+
+            // ---------- 清除内容 ----------
+            function clearCell(row, col) {
+                const key = cellKey(row, col);
+                delete cellData[key];
+                updateCell(row, col);
+                if (row === selectedRow && col === selectedCol) {
+                    updateStatus();
+                    updateToolbarState();
+                }
+            }
+
+            // ---------- 键盘事件 ----------
+            function handleKeyDown(e) {
+                const key = e.key;
+                const ctrl = e.ctrlKey || e.metaKey;
+
+                // Ctrl+C / Ctrl+V / Ctrl+X
+                if (ctrl && key === 'c') {
+                    e.preventDefault();
+                    const data = getCellData(selectedRow, selectedCol);
+                    clipboard = { row: selectedRow, col: selectedCol, data: JSON.parse(JSON.stringify(data)) };
+                    return;
+                }
+                if (ctrl && key === 'v') {
+                    e.preventDefault();
+                    if (clipboard) {
+                        const data = getCellData(selectedRow, selectedCol);
+                        Object.assign(data, clipboard.data);
+                        setCellData(selectedRow, selectedCol, data);
+                        updateCell(selectedRow, selectedCol);
+                        updateStatus();
+                        updateToolbarState();
+                    }
+                    return;
+                }
+                if (ctrl && key === 'x') {
+                    e.preventDefault();
+                    const data = getCellData(selectedRow, selectedCol);
+                    clipboard = { row: selectedRow, col: selectedCol, data: JSON.parse(JSON.stringify(data)) };
+                    clearCell(selectedRow, selectedCol);
+                    return;
+                }
+
+                // 编辑状态 (Enter / Escape)
+                if (key === 'Enter') {
+                    if (isEditing) {
+                        saveEdit();
+                        // 移动到下一行
+                        if (selectedRow < ROWS - 1) {
+                            selectCell(selectedRow + 1, selectedCol);
+                        }
+                    } else {
+                        // 开始编辑
+                        formulaInput.focus();
+                        formulaInput.select();
+                        isEditing = true;
+                        const cellEl = document.querySelector(`.cell[data-row="${selectedRow}"][data-col="${selectedCol}"]`);
+                        if (cellEl) cellEl.classList.add('editing');
+                    }
+                    e.preventDefault();
+                    return;
+                }
+                if (key === 'Escape') {
+                    if (isEditing) {
+                        // 取消编辑，恢复原值
+                        const data = getCellData(selectedRow, selectedCol);
+                        formulaInput.value = data.value || '';
+                        isEditing = false;
+                        document.querySelectorAll('.cell.editing').forEach(el => el.classList.remove('editing'));
+                        e.preventDefault();
+                    }
+                    return;
+                }
+
+                // 如果正在编辑，只处理特殊键
+                if (isEditing) {
+                    if (key === 'Tab') {
+                        e.preventDefault();
+                        saveEdit();
+                        if (e.shiftKey) {
+                            if (selectedCol > 0) selectCell(selectedRow, selectedCol - 1);
+                        } else {
+                            if (selectedCol < COLS - 1) selectCell(selectedRow, selectedCol + 1);
+                        }
+                        return;
+                    }
+                    return;
+                }
+
+                // 导航键
+                if (key === 'ArrowUp') { e.preventDefault();
+                    selectCell(selectedRow - 1, selectedCol); return; }
+                if (key === 'ArrowDown') { e.preventDefault();
+                    selectCell(selectedRow + 1, selectedCol); return; }
+                if (key === 'ArrowLeft') { e.preventDefault();
+                    selectCell(selectedRow, selectedCol - 1); return; }
+                if (key === 'ArrowRight') { e.preventDefault();
+                    selectCell(selectedRow, selectedCol + 1); return; }
+                if (key === 'Tab') {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        if (selectedCol > 0) selectCell(selectedRow, selectedCol - 1);
+                    } else {
+                        if (selectedCol < COLS - 1) selectCell(selectedRow, selectedCol + 1);
+                    }
+                    return;
+                }
+                if (key === 'Home') {
+                    e.preventDefault();
+                    if (e.ctrlKey) { selectCell(0, 0); } else { selectCell(selectedRow, 0); }
+                    return;
+                }
+                if (key === 'End') {
+                    e.preventDefault();
+                    if (e.ctrlKey) { selectCell(ROWS - 1, COLS - 1); } else { selectCell(selectedRow, COLS - 1); }
+                    return;
+                }
+                if (key === 'PageUp') { e.preventDefault();
+                    selectCell(Math.max(0, selectedRow - 20), selectedCol); return; }
+                if (key === 'PageDown') { e.preventDefault();
+                    selectCell(Math.min(ROWS - 1, selectedRow + 20), selectedCol); return; }
+
+                // 字母/数字直接开始编辑
+                if (key.length === 1 && !ctrl && !e.altKey) {
+                    // 如果焦点在输入框中，不拦截输入
+                    const activeElement = document.activeElement;
+                    if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                        return;
+                    }
+                    formulaInput.focus();
+                    formulaInput.value = key;
+                    isEditing = true;
+                    const cellEl = document.querySelector(`.cell[data-row="${selectedRow}"][data-col="${selectedCol}"]`);
+                    if (cellEl) cellEl.classList.add('editing');
+                    // 移动光标到末尾
+                    setTimeout(() => {
+                        formulaInput.selectionStart = formulaInput.selectionEnd = formulaInput.value.length;
+                    }, 0);
+                    e.preventDefault();
+                }
+            }
+
+            // ---------- 公式栏输入事件 ----------
+            function onFormulaInput(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEdit();
+                    if (selectedRow < ROWS - 1) {
+                        selectCell(selectedRow + 1, selectedCol);
+                    }
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    const data = getCellData(selectedRow, selectedCol);
+                    formulaInput.value = data.value || '';
+                    isEditing = false;
+                    document.querySelectorAll('.cell.editing').forEach(el => el.classList.remove('editing'));
+                    return;
+                }
+                // 实时更新单元格（预览）
+                if (!isEditing) {
+                    isEditing = true;
+                    const cellEl = document.querySelector(`.cell[data-row="${selectedRow}"][data-col="${selectedCol}"]`);
+                    if (cellEl) cellEl.classList.add('editing');
+                }
+                const val = formulaInput.value;
+                const data = getCellData(selectedRow, selectedCol);
+                data.value = val;
+                setCellData(selectedRow, selectedCol, data);
+                updateCell(selectedRow, selectedCol);
+            }
+
+            // ---------- 点击单元格 ----------
+            function onCellClick(e) {
+                const td = e.target.closest('.cell');
+                if (!td) return;
+                const row = parseInt(td.dataset.row);
+                const col = parseInt(td.dataset.col);
+                if (isNaN(row) || isNaN(col)) return;
+                // 如果点击的是同一个单元格，进入编辑
+                if (row === selectedRow && col === selectedCol) {
+                    formulaInput.focus();
+                    formulaInput.select();
+                    isEditing = true;
+                    const cellEl = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    if (cellEl) cellEl.classList.add('editing');
+                    return;
+                }
+                selectCell(row, col);
+                // 双击进入编辑
+            }
+
+            function onCellDblClick(e) {
+                const td = e.target.closest('.cell');
+                if (!td) return;
+                const row = parseInt(td.dataset.row);
+                const col = parseInt(td.dataset.col);
+                if (isNaN(row) || isNaN(col)) return;
+                selectCell(row, col);
+                formulaInput.focus();
+                formulaInput.select();
+                isEditing = true;
+                const cellEl = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                if (cellEl) cellEl.classList.add('editing');
+            }
+
+            // ---------- 列标题点击 (全选列) ----------
+            function onColHeaderClick(e) {
+                const th = e.target.closest('.col-header');
+                if (!th) return;
+                const col = parseInt(th.dataset.col);
+                if (isNaN(col)) return;
+                // 选中该列第一个单元格
+                selectCell(0, col);
+            }
+
+            // ---------- 行标题点击 (全选行) ----------
+            function onRowHeaderClick(e) {
+                const th = e.target.closest('.row-header');
+                if (!th) return;
+                const row = parseInt(th.dataset.row);
+                if (isNaN(row)) return;
+                selectCell(row, 0);
+            }
+
+            // ---------- 角落点击 (全选) ----------
+            function onCornerClick() {
+                selectCell(0, 0);
+            }
+
+            // ---------- 右键菜单 ----------
+            function onContextMenu(e) {
+                e.preventDefault();
+                const td = e.target.closest('.cell');
+                if (td) {
+                    const row = parseInt(td.dataset.row);
+                    const col = parseInt(td.dataset.col);
+                    if (!isNaN(row) && !isNaN(col)) {
+                        selectCell(row, col);
+                    }
+                }
+                contextMenu.style.display = 'block';
+                contextMenu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+                contextMenu.style.top = Math.min(e.clientY, window.innerHeight - 300) + 'px';
+            }
+
+            function closeContextMenu() {
+                contextMenu.style.display = 'none';
+            }
+
+            // ---------- 右键菜单操作 ----------
+            function onContextMenuAction(e) {
+                const item = e.target.closest('.menu-item');
+                if (!item) return;
+                const action = item.dataset.action;
+                closeContextMenu();
+                switch (action) {
+                    case 'copy': {
+                        const data = getCellData(selectedRow, selectedCol);
+                        clipboard = { row: selectedRow, col: selectedCol, data: JSON.parse(JSON.stringify(data)) };
+                        break;
+                    }
+                    case 'paste': {
+                        if (clipboard) {
+                            const data = getCellData(selectedRow, selectedCol);
+                            Object.assign(data, clipboard.data);
+                            setCellData(selectedRow, selectedCol, data);
+                            updateCell(selectedRow, selectedCol);
+                            updateStatus();
+                            updateToolbarState();
+                        }
+                        break;
+                    }
+                    case 'cut': {
+                        const data = getCellData(selectedRow, selectedCol);
+                        clipboard = { row: selectedRow, col: selectedCol, data: JSON.parse(JSON.stringify(data)) };
+                        clearCell(selectedRow, selectedCol);
+                        break;
+                    }
+                    case 'clear': {
+                        clearCell(selectedRow, selectedCol);
+                        updateStatus();
+                        updateToolbarState();
+                        break;
+                    }
+                    case 'insert-row': {
+                        // 向下插入一行 (简单实现: 所有行下移)
+                        for (let r = ROWS - 1; r > selectedRow; r--) {
+                            for (let c = 0; c < COLS; c++) {
+                                const srcKey = cellKey(r - 1, c);
+                                const dstKey = cellKey(r, c);
+                                if (cellData[srcKey]) {
+                                    cellData[dstKey] = JSON.parse(JSON.stringify(cellData[srcKey]));
+                                } else {
+                                    delete cellData[dstKey];
+                                }
+                            }
+                        }
+                        // 清空当前行
+                        for (let c = 0; c < COLS; c++) {
+                            const key = cellKey(selectedRow, c);
+                            delete cellData[key];
+                        }
+                        renderGrid();
+                        selectCell(selectedRow, selectedCol);
+                        break;
+                    }
+                    case 'delete-row': {
+                        for (let r = selectedRow; r < ROWS - 1; r++) {
+                            for (let c = 0; c < COLS; c++) {
+                                const srcKey = cellKey(r + 1, c);
+                                const dstKey = cellKey(r, c);
+                                if (cellData[srcKey]) {
+                                    cellData[dstKey] = JSON.parse(JSON.stringify(cellData[srcKey]));
+                                } else {
+                                    delete cellData[dstKey];
+                                }
+                            }
+                        }
+                        // 清空最后一行
+                        for (let c = 0; c < COLS; c++) {
+                            const key = cellKey(ROWS - 1, c);
+                            delete cellData[key];
+                        }
+                        renderGrid();
+                        if (selectedRow >= ROWS) selectCell(ROWS - 1, selectedCol);
+                        else selectCell(selectedRow, selectedCol);
+                        break;
+                    }
+                    case 'insert-col': {
+                        for (let c = COLS - 1; c > selectedCol; c--) {
+                            for (let r = 0; r < ROWS; r++) {
+                                const srcKey = cellKey(r, c - 1);
+                                const dstKey = cellKey(r, c);
+                                if (cellData[srcKey]) {
+                                    cellData[dstKey] = JSON.parse(JSON.stringify(cellData[srcKey]));
+                                } else {
+                                    delete cellData[dstKey];
+                                }
+                            }
+                        }
+                        for (let r = 0; r < ROWS; r++) {
+                            const key = cellKey(r, selectedCol);
+                            delete cellData[key];
+                        }
+                        renderGrid();
+                        selectCell(selectedRow, selectedCol);
+                        break;
+                    }
+                    case 'delete-col': {
+                        for (let c = selectedCol; c < COLS - 1; c++) {
+                            for (let r = 0; r < ROWS; r++) {
+                                const srcKey = cellKey(r, c + 1);
+                                const dstKey = cellKey(r, c);
+                                if (cellData[srcKey]) {
+                                    cellData[dstKey] = JSON.parse(JSON.stringify(cellData[srcKey]));
+                                } else {
+                                    delete cellData[dstKey];
+                                }
+                            }
+                        }
+                        for (let r = 0; r < ROWS; r++) {
+                            const key = cellKey(r, COLS - 1);
+                            delete cellData[key];
+                        }
+                        renderGrid();
+                        if (selectedCol >= COLS) selectCell(selectedRow, COLS - 1);
+                        else selectCell(selectedRow, selectedCol);
+                        break;
+                    }
+                }
+            }
+
+            // ---------- 工具栏按钮事件 ----------
+            function setupToolbar() {
+                // 加粗
+                document.querySelector('[data-action="bold"]')?.addEventListener('click', () => toggleStyle('bold'));
+                document.querySelector('[data-action="italic"]')?.addEventListener('click', () => toggleStyle('italic'));
+                document.querySelector('[data-action="underline"]')?.addEventListener('click', () => toggleStyle(
+                'underline'));
+                document.querySelector('[data-action="align-left"]')?.addEventListener('click', () => setAlign('left'));
+                document.querySelector('[data-action="align-center"]')?.addEventListener('click', () => setAlign('center'));
+                document.querySelector('[data-action="align-right"]')?.addEventListener('click', () => setAlign('right'));
+                document.querySelector('[data-action="clear"]')?.addEventListener('click', () => {
+                    clearCell(selectedRow, selectedCol);
+                    updateStatus();
+                    updateToolbarState();
+                });
+
+                // 字体颜色
+                document.getElementById('fontColor')?.addEventListener('input', function() {
+                    applyStyle('color', this.value);
+                });
+                document.getElementById('fillColor')?.addEventListener('input', function() {
+                    applyStyle('bgColor', this.value);
+                });
+                document.getElementById('fontSize')?.addEventListener('change', function() {
+                    applyStyle('fontSize', parseInt(this.value) || 12);
+                });
+            }
+
+            // ---------- 工作表切换 ----------
+            function setupSheets() {
+                document.querySelectorAll('.sheet-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        if (this.dataset.sheet === 'new') {
+                            // 添加新sheet (演示)
+                            const count = document.querySelectorAll('.sheet-tab:not([data-sheet="new"])')
+                            .length;
+                            const newTab = document.createElement('span');
+                            newTab.className = 'sheet-tab';
+                            newTab.dataset.sheet = count;
+                            newTab.textContent = 'Sheet' + (count + 1);
+                            this.parentNode.insertBefore(newTab, this);
+                            // 激活新tab
+                            document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove(
+                            'active'));
+                            newTab.classList.add('active');
+                            // 清空数据 (演示)
+                            cellData = {};
+                            renderGrid();
+                            selectCell(0, 0);
+                            return;
+                        }
+                        document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        // 切换sheet时清空数据 (演示)
+                        cellData = {};
+                        renderGrid();
+                        selectCell(0, 0);
+                    });
+                });
+            }
+
+            // 状态更新
+            function setStatus(text, type = 'info') {
+            statusMsg.textContent = text;
+            statusMsg.className = 'status';
+            if (type === 'error') statusMsg.classList.add('error');
+            else if (type === 'success') statusMsg.classList.add('success');
+            }
+
+            // 格式化数字
+            function formatNumber(num) {
+                if (num == null) return '';
+                if (num >= 100000000) {
+                    return (num / 100000000).toFixed(2) + '亿';
+                } else if (num >= 10000) {
+                    return (num / 10000).toFixed(2) + '万';
+                } else {
+                    return num.toLocaleString('zh-CN');
+                }
+            }
+
+            // 格式化时间戳
+            function formatTimestamp(ts) {
+                if (!ts) return '';
+                const date = new Date(ts);
+                // const year = date.getFullYear();
+                // const month = String(date.getMonth() + 1).padStart(2, '0');
+                // const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const seconds = String(date.getSeconds()).padStart(2, '0');
+                // return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                return `${hours}:${minutes}:${seconds}`;
+            }
+
+            // 主要查询函数
+        async function fetchQuotes(symbols) {
+            if (!symbols || symbols.trim() === '') {
+                setStatus('⚠️ 请输入至少一个股票代码', 'error');
+                return;
+            }
+
+            const symbolList = symbols.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            if (symbolList.length === 0) {
+                setStatus('⚠️ 无效的股票代码', 'error');
+                return;
+            }
+
+            const queryString = symbolList.join(',');
+            const url = `${BASE_URL}?symbols=${encodeURIComponent(queryString)}`;
+
+            queryBtn.disabled = true;
+            setStatus('⏳ 加载中...', 'info');
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'x-api-key': API_KEY }
+                });
+
+                if (!response.ok) {
+                    let errorMsg = `HTTP ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData && errorData.message) {
+                            errorMsg += ` - ${errorData.message}`;
+                        }
+                    } catch (_) {}
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+                // 预期结构：{ data: [ ... ] }
+                const dataArray = result.data || [];
+                
+                // 清空之前的数据
+                for (let r = 1; r <= 10; r++) {
+                    for (let c = 0; c < 13; c++) {
+                        const key = cellKey(r, c);
+                        delete cellData[key];
+                    }
+                }
+                
+                // 将数据按行展示到表格中
+                dataArray.forEach((item, index) => {
+                    const row = index + 1; // 从第1行开始（第0行是表头）
+                    const ext = item.ext || {};
+                    
+                    // 序号
+                    cellData[cellKey(row, 0)] = { value: String(index + 1), align: 'center' };
+                    // 代码
+                    cellData[cellKey(row, 1)] = { value: item.symbol || '' };
+                    // 名称
+                    cellData[cellKey(row, 2)] = { value: ext.name || '' };
+                    // 最新价
+                    cellData[cellKey(row, 3)] = { value: item.last_price != null ? String(item.last_price) : '', align: 'right' };
+                    // 涨跌幅
+                    const changePct = ext.change_pct != null ? (ext.change_pct * 100).toFixed(2) + '%' : '';
+                    const changePctColor = ext.change_pct > 0 ? '#e74c3c' : (ext.change_pct < 0 ? '#4caf50' : '#666');
+                    cellData[cellKey(row, 4)] = { value: changePct, color: changePctColor, align: 'right' };
+                    // 涨跌额
+                    const changeAmt = ext.change_amount != null ? String(ext.change_amount.toFixed(2)) : '';
+                    cellData[cellKey(row, 5)] = { value: changeAmt, color: changePctColor, align: 'right' };
+                    // 开盘
+                    cellData[cellKey(row, 6)] = { value: item.open != null ? String(item.open) : '', align: 'right' };
+                    // 最高
+                    cellData[cellKey(row, 7)] = { value: item.high != null ? String(item.high) : '', align: 'right' };
+                    // 最低
+                    cellData[cellKey(row, 8)] = { value: item.low != null ? String(item.low) : '', align: 'right' };
+                    // 成交量
+                    const volume = item.volume != null ? formatNumber(item.volume) : '';
+                    cellData[cellKey(row, 9)] = { value: volume, align: 'right' };
+                    // 成交额
+                    const amount = item.amount != null ? formatNumber(item.amount) : '';
+                    cellData[cellKey(row, 10)] = { value: amount, align: 'right' };
+                    // 换手率
+                    const turnover = ext.turnover_rate != null ? (ext.turnover_rate * 100).toFixed(2) + '%' : '';
+                    cellData[cellKey(row, 11)] = { value: turnover, align: 'right' };
+                    // 时间
+                    const time = item.timestamp ? formatTimestamp(item.timestamp) : '';
+                    cellData[cellKey(row, 12)] = { value: time, align: 'center' };
+                });
+                
+                setStatus(`✅ 查询成功 (${dataArray.length} 个标的)`, 'success');
+                renderGrid();
+
+            } catch (err) {
+                console.error('Fetch error:', err);
+                setStatus(`❌ 请求失败: ${err.message}`, 'error');
+            } finally {
+                queryBtn.disabled = false;
+            }
+        }
+
+        function handleQuery() {
+            const symbols = symbolInput.value.trim();
+            fetchQuotes(symbols);
+            setTimeout(() => {
+                handleQuery();  // 每12秒自动刷新
+            }, 12000);
+        }
+
+        queryBtn.addEventListener('click', handleQuery);
+        symbolInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleQuery();
+            }
+        })
+
+            // ---------- 初始化 ----------
+            function init() {
+                // 填充一些示例数据
+                const sampleData = {
+                    'A1': { value: '#', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'B1': { value: '代码', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'C1': { value: '名称', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'D1': { value: '最新价', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'E1': { value: '涨跌幅', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'F1': { value: '涨跌额', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'G1': { value: '开盘', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'H1': { value: '最高', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'I1': { value: '最低', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'J1': { value: '成交量', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'K1': { value: '成交额', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'L1': { value: '换手率', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                    'M1': { value: '时间', bold: true, align: 'center', bgColor: '#e8ecf1' },
+                };
+                Object.assign(cellData, sampleData);
+
+                renderGrid();
+                selectCell(0, 0);
+
+                // 事件绑定
+                document.addEventListener('click', (e) => {
+                    if (!contextMenu.contains(e.target)) closeContextMenu();
+                });
+                document.addEventListener('keydown', handleKeyDown);
+                document.addEventListener('contextmenu', onContextMenu);
+                contextMenu.addEventListener('click', onContextMenuAction);
+
+                // 表格事件委托
+                gridBody.addEventListener('click', onCellClick);
+                gridBody.addEventListener('dblclick', onCellDblClick);
+                gridHead.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('col-header')) onColHeaderClick(e);
+                    if (e.target.classList.contains('corner')) onCornerClick();
+                });
+                gridBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('row-header')) onRowHeaderClick(e);
+                });
+
+                // 公式栏
+                formulaInput.addEventListener('keydown', onFormulaInput);
+                formulaInput.addEventListener('blur', function() {
+                    if (isEditing) {
+                        // 延迟保存，防止点击其他元素时冲突
+                        setTimeout(() => {
+                            if (isEditing) saveEdit();
+                        }, 100);
+                    }
+                });
+
+                // 工具栏
+                setupToolbar();
+
+                // 工作表
+                setupSheets();
+
+                // 窗口resize - 调整滚动
+                window.addEventListener('resize', () => {
+                    // 不需要额外操作
+                });
+
+                // 阻止默认拖拽
+                document.addEventListener('dragstart', (e) => e.preventDefault());
+
+                console.log('✅ Excel 已加载! 行数:', ROWS, '列数:', COLS);
+            }
+
+            // DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
