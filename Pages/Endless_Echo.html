@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="rp6hXaByWHfzDlTPfI5ZMb">
+<head data-page-node-id="ISzt5ShukAIrjIuSFBm4b7">
+<meta charset="UTF-8" data-page-node-id="d2rSmQ8QBGk5OkJzbM3ry1">
+<meta name="viewport" content="width=device-width,initial-scale=1" data-page-node-id="aBN0bZwkEuvBs14SBDrpBZ">
+<title>无尽回响 · Endless Echo</title>
+<style>
+:root{
+  --paper:#f4efe4; --paper2:#ebe3d3; --ink:#2b2620; --ink2:#5d554a;
+  --line:#c8bda6; --gold:#a67c1a; --red:#a83232; --blue:#2f5d8a;
+  --purple:#6b3fa0; --green:#3d6b45; --shadow:rgba(43,38,32,.18);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Songti SC","STSong","Noto Serif SC",Georgia,serif;
+  background-image:radial-gradient(circle at 20% 10%,#fbf8f1 0%,#efe7d7 60%,#e6dcc8 100%);
+  overflow:hidden;
+}
+#app{display:flex;flex-direction:column;height:100vh;max-width:1180px;margin:0 auto;padding:8px 14px 0}
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- HUD ---------- */
+#hud{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:6px;background:#fbf7ee;
+  padding:8px 12px;box-shadow:0 2px 6px var(--shadow);font-size:14px;
+  min-width:0;
+}
+.stat{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.hpbar{width:130px;height:12px;border:1px solid var(--line);background:#e9e0cd;border-radius:6px;overflow:hidden;position:relative}
+.hpbar > i{display:block;height:100%;background:linear-gradient(90deg,#a83232,#c8503c);transition:width .25s}
+.hpbar > b{position:absolute;inset:0;font-size:9px;text-align:center;color:#fff;font-weight:400;line-height:12px;text-shadow:0 0 2px #000}
+.entbar{width:90px;height:12px;border:1px solid var(--line);background:#e9e0cd;border-radius:6px;overflow:hidden}
+.entbar > i{display:block;height:100%;background:linear-gradient(90deg,#6b3fa0,#9a6fd0)}
+.tag{border:1px solid var(--line);border-radius:4px;padding:1px 6px;font-size:12px;background:#f3ecdd}
+.tag.gain{color:var(--blue);border-color:#9fb6cc}
+.tag.cost{color:var(--red);border-color:#cfa3a3}
+.tag.chaos{color:var(--purple);border-color:#b9a0cf}
+#hud .spacer{flex:1}
+#hud .meta{font-size:12px;color:var(--ink2)}
+/* 词条区：数量多时可横向滚动，不撑破 HUD（桌面/手机通用） */
+.stat.perks{flex:1 1 auto;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;
+  white-space:nowrap;padding-bottom:1px;scrollbar-width:none}
+.stat.perks::-webkit-scrollbar{display:none}
+
+/* ---------- screen ---------- */
+#screen{flex:1;overflow:auto;padding:10px 2px 20px;position:relative}
+h1.title{font-size:44px;letter-spacing:12px;margin:34px 0 4px;text-align:center}
+.sub{text-align:center;color:var(--ink2);letter-spacing:4px;margin-bottom:26px}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:14px 0}
+.center{text-align:center}
+.btn{
+  border:1px solid var(--line);background:#fbf7ee;color:var(--ink);
+  border-radius:5px;padding:8px 16px;font-size:15px;transition:.15s;
+}
+.btn:hover{background:#efe6d3;transform:translateY(-1px)}
+.btn.primary{background:var(--ink);color:#f6f1e5;border-color:var(--ink)}
+.btn.primary:hover{background:#413a31}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.bigrow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+
+/* ---------- panels / cards ---------- */
+.panel{border:1px solid var(--line);border-radius:8px;background:#fbf7ee;padding:14px 16px;box-shadow:0 2px 6px var(--shadow)}
+.grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.card{
+  width:150px;min-height:196px;border:1px solid var(--line);border-radius:8px;
+  background:linear-gradient(180deg,#fdfbf5,#f0e8d7);padding:10px;position:relative;
+  display:flex;flex-direction:column;gap:6px;box-shadow:0 2px 5px var(--shadow);
+  transition:.15s;cursor:default;
+}
+.card.pick{cursor:pointer}
+.card.pick:hover{transform:translateY(-6px);box-shadow:0 8px 16px var(--shadow);border-color:var(--ink2)}
+.card .cname{font-size:16px;font-weight:700;text-align:center}
+.card .cost{
+  position:absolute;top:-9px;left:-9px;width:26px;height:26px;border-radius:50%;
+  background:var(--ink);color:#f6f1e5;text-align:center;line-height:26px;font-size:14px;
+}
+.card .ctype{font-size:11px;color:var(--ink2);text-align:center;border-bottom:1px dotted var(--line);padding-bottom:4px}
+.card .cdesc{font-size:12.5px;line-height:1.5;color:var(--ink2);flex:1}
+.card.atk{border-top:3px solid var(--red)}
+.card.skl{border-top:3px solid var(--blue)}
+.card.pow{border-top:3px solid var(--green)}
+.card.rare{box-shadow:0 0 0 2px var(--gold) inset,0 2px 5px var(--shadow)}
+.perk{
+  width:210px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fbf7ee;
+  cursor:pointer;transition:.15s;box-shadow:0 2px 5px var(--shadow)
+}
+.perk:hover{transform:translateY(-4px);border-color:var(--ink2)}
+.perk .pn{font-size:17px;font-weight:700}
+.perk .pd{font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:4px}
+.perk.gain{border-left:5px solid var(--blue)}
+.perk.cost{border-left:5px solid var(--red)}
+.perk.chaos{border-left:5px solid var(--purple)}
+
+/* ---------- map ---------- */
+#mapwrap{position:relative;height:560px;border:1px solid var(--line);border-radius:8px;background:#fbf7ee;overflow:hidden}
+#mapwrap svg{position:absolute;inset:0;width:100%;height:100%}
+.node{
+  position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;
+  border:1px solid var(--line);background:#f3ecdd;display:flex;align-items:center;justify-content:center;
+  font-size:17px;color:var(--ink2);transition:.15s;
+}
+.node.avail{cursor:pointer;border-color:var(--ink);background:#fff9e8;color:var(--ink);box-shadow:0 0 0 3px #e5d6a8}
+.node.avail:hover{transform:scale(1.14)}
+.node.done{background:#e3dccb;color:#a89e8c}
+.node.cur{background:var(--ink);color:#f6f1e5;border-color:var(--ink)}
+.node.gone{opacity:.22;text-decoration:line-through}
+.node.boss{width:56px;height:56px;margin:-28px 0 0 -28px;font-size:20px;border-width:2px}
+.lab{position:absolute;font-size:11px;color:var(--ink2);transform:translateX(-50%)}
+
+/* ---------- battle ---------- */
+#btl{display:flex;flex-direction:column;height:100%;gap:8px}
+.arena{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;padding:6px 4px}
+.side{display:flex;gap:14px;flex-wrap:wrap}
+.unit{
+  width:190px;border:1px solid var(--line);border-radius:8px;background:#fbf7ee;padding:10px;
+  box-shadow:0 2px 5px var(--shadow);cursor:default;position:relative
+}
+.unit.target{cursor:pointer}
+.unit.target:hover{border-color:var(--red)}
+.unit.sel{border:2px solid var(--red);box-shadow:0 0 0 3px #f0dcdc}
+.unit .un{font-size:15px;font-weight:700;text-align:center}
+.unit .intent{text-align:center;font-size:12px;color:var(--ink2);margin:4px 0 6px;min-height:16px}
+.unit .intent b{color:var(--red)}
+.blk{display:inline-block;border:1px solid var(--blue);color:var(--blue);border-radius:4px;padding:0 5px;font-size:12px}
+.buffs{display:flex;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--ink2);margin-top:5px;min-height:14px}
+.buffs span{border:1px solid var(--line);border-radius:3px;padding:0 4px;background:#f3ecdd}
+.hand{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:200px;align-items:flex-end;padding:4px}
+.hand .card{cursor:pointer;min-height:170px}
+.hand .card:hover{transform:translateY(-10px);box-shadow:0 10px 18px var(--shadow)}
+.hand .card.no{opacity:.42;filter:grayscale(.7)}
+.bbar{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);padding-top:8px;flex-wrap:wrap}
+.energy{
+  width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7a5cb3,#4b2f7a);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 6px var(--shadow)
+}
+#logbox{
+  height:92px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:#f7f2e6;
+  padding:6px 10px;font-size:12.5px;line-height:1.7;color:var(--ink2)
+}
+#logbox p{margin:0}
+#logbox p.hi{color:var(--red)}
+.floatmsg{position:fixed;left:50%;top:26%;transform:translateX(-50%);font-size:26px;color:var(--red);
+  text-shadow:0 2px 8px #fff;pointer-events:none;animation:fl 1s ease-out forwards}
+@keyframes fl{0%{opacity:0;transform:translate(-50%,10px)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+
+/* ---------- misc ---------- */
+table.sheet{border-collapse:collapse;width:100%;font-size:13px}
+table.sheet th,table.sheet td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+table.sheet th{background:#efe6d3}
+.shopitem{width:200px;border:1px solid var(--line);border-radius:8px;background:#fbf7ee;padding:10px;box-shadow:0 2px 5px var(--shadow);display:flex;flex-direction:column;gap:6px}
+.shopitem .pr{font-size:13px;color:var(--gold);font-weight:700}
+.dim{color:var(--ink2);font-size:13px}
+.scroll{display:flex;gap:10px;overflow:auto;padding-bottom:6px}
+.kv{display:flex;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink2);justify-content:center}
+.banner{text-align:center;font-size:22px;letter-spacing:6px;margin:18px 0 6px}
+.warn{color:var(--red)}
+
+/* =========================================================
+   布局宽松化 + 移动端适配（覆盖层，置于基础样式之后）
+   ========================================================= */
+*{-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+button,.card,.perk,.node,.unit,.shopitem{touch-action:manipulation}
+
+#app{height:100vh;height:100dvh;max-width:1280px;padding:14px 22px 0}
+#hud{gap:12px 18px;padding:12px 16px;font-size:15px;border-radius:8px}
+.hgroup{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;min-width:0}
+.hgroup.g3{margin-left:auto}
+.hgroup.g2 .hpbar{flex:1 1 auto}
+#hud .meta{font-size:13px;color:var(--ink2)}
+.hpbar{width:160px;height:14px}
+.hpbar > b{font-size:10px;line-height:14px}
+.entbar{width:110px;height:14px}
+.tag{font-size:12.5px;padding:2px 8px}
+#screen{padding:18px 4px 30px}
+h1.title{font-size:52px;margin:44px 0 8px}
+.sub{font-size:16px;letter-spacing:6px;margin-bottom:30px}
+.rule{margin:20px 0}
+.btn{padding:11px 20px;font-size:16px;border-radius:6px}
+.bigrow{gap:16px;margin-top:24px}
+.panel{padding:18px 22px}
+.grid{gap:16px}
+.card{width:174px;min-height:226px;padding:13px;gap:8px;border-radius:9px}
+.card .cname{font-size:18px}
+.card .ctype{font-size:12px;padding-bottom:6px}
+.card .cdesc{font-size:13.5px;line-height:1.7}
+.card .cost{width:28px;height:28px;line-height:28px;font-size:15px;top:-10px;left:-10px}
+.perk{width:252px;padding:14px 16px;border-radius:9px}
+.perk .pn{font-size:19px}
+.perk .pd{font-size:13.5px;line-height:1.7;margin-top:6px}
+#mapwrap{height:var(--mapH,min(620px,64vh));border-radius:10px}
+.node{width:46px;height:46px;margin:-23px 0 0 -23px;font-size:18px}
+.node.boss{width:58px;height:58px;margin:-29px 0 0 -29px;font-size:21px}
+.lab{font-size:11px}
+.arena{gap:clamp(24px,7vw,120px);padding:14px 4px;justify-content:center;position:relative}
+.arena::after{content:'';position:absolute;left:50%;top:12%;height:76%;width:1px;
+  background:linear-gradient(180deg,transparent,var(--line) 20%,var(--line) 80%,transparent)}
+.unit{width:224px;padding:12px;border-radius:9px}
+.unit .un{font-size:16px}
+.unit .intent{font-size:13px;margin:6px 0 8px}
+.hand{gap:14px;min-height:240px;padding:6px 0 4px}
+.hand .card{min-height:192px}
+.bbar{gap:20px;padding-top:14px}
+.energy{width:58px;height:58px;font-size:21px}
+#logbox{height:112px;font-size:13px;line-height:1.8;padding:8px 12px}
+.shopitem{width:236px;padding:12px 12px 14px;gap:10px;display:flex;flex-direction:column}
+.shopitem .btn{margin-top:auto}
+.shopitem .card{width:100%;min-width:0;min-height:176px;flex:1}
+/* 选择型页面：等高对齐网格 */
+.rowgrid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:stretch}
+.rowgrid .card{width:auto;flex:1 1 170px;max-width:226px;min-width:0}
+.rowgrid .perk{width:auto;flex:1 1 158px;max-width:330px}
+.rowgrid .shopitem{width:auto;flex:1 1 240px;max-width:300px}
+.rowgrid .perk .pd:last-child{margin-top:auto}
+/* 商店：商品 4 列 + 服务 2 列 */
+.shopgrid{display:grid;gap:16px;align-items:stretch;grid-template-columns:repeat(4,minmax(0,1fr))}
+.shopgrid .shopitem{width:auto}
+.shopservices{display:grid;gap:16px;max-width:660px;margin:16px auto 0;grid-template-columns:repeat(2,minmax(0,1fr))}
+.dim{font-size:14px}
+.kv{gap:14px;font-size:14px}
+.banner{font-size:25px;margin:24px 0 10px}
+
+/* ---------- 平板 ---------- */
+@media (max-width:1024px){
+  #app{padding:10px 14px 0}
+  #hud{font-size:14px;gap:12px 16px}
+  .card{width:160px;min-height:212px}
+  .unit{width:200px}
+  .perk{width:230px}
+  #mapwrap{height:var(--mapH,min(560px,60vh))}
+}
+
+/* ---------- 手机 ---------- */
+@media (max-width:768px){
+  #app{padding:8px 10px 0}
+  #hud{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:8px;padding:9px 11px;font-size:12.5px}
+  #hud .stat{gap:5px}
+  .hgroup{gap:6px 12px}
+  .hgroup.g2 .hpbar{min-width:0}
+  .hgroup.g3{margin-left:0;flex-wrap:nowrap}
+  .hpbar{width:102px;height:13px}
+  .hpbar > b{font-size:9px;line-height:13px}
+  .entbar{width:58px;height:13px}
+  .tag{font-size:11px;padding:1px 6px}
+  #hud .perks{flex:1 1 auto;min-width:0;justify-content:flex-start;overflow-x:auto;white-space:nowrap;
+    padding-bottom:2px;scrollbar-width:none}
+  #hud .perks::-webkit-scrollbar{display:none}
+  #hud .btn{padding:7px 11px;font-size:13px;flex:0 0 auto}
+  #screen{padding:12px 2px 28px}
+
+  h1.title{font-size:32px;letter-spacing:6px;margin:24px 0 6px}
+  .sub{font-size:13px;letter-spacing:3px;margin-bottom:20px}
+  .btn{padding:10px 15px;font-size:14.5px}
+  .bigrow{gap:10px;margin-top:18px}
+  .bigrow .btn{flex:1 1 46%;min-width:140px}
+  .panel{padding:14px}
+  .grid{gap:10px}
+  .kv{gap:10px;font-size:12.5px}
+  .banner{font-size:20px;letter-spacing:4px;margin:16px 0 8px}
+  .rule{margin:14px 0}
+  .dim{font-size:12.5px}
+
+  .card{width:auto;flex:1 1 calc(50% - 8px);min-width:138px;min-height:198px;padding:11px}
+  .card .cname{font-size:16px}
+  .card .cdesc{font-size:12.5px;line-height:1.6}
+  .card .cost{width:26px;height:26px;line-height:26px;font-size:14px;top:-8px;left:-8px}
+  .perk{width:100%;padding:12px 14px}
+  .perk .pn{font-size:17px}
+  .perk .pd{font-size:12.5px}
+  .shopitem{width:100%}
+  .rowgrid{gap:10px}
+  .rowgrid .card,.rowgrid .perk{flex:0 1 calc(50% - 5px);max-width:none}
+  .shopgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shopgrid .shopitem{padding:10px}
+  .shopservices{grid-template-columns:1fr;gap:10px;margin-top:12px}
+  .shopitem .card{min-height:158px}
+
+  /* 战场：敌人在上，玩家在下 */
+  .arena{flex-direction:column;gap:10px;padding:4px 0}
+  .arena::after{display:none}
+  .arena > .side:first-child{order:2;width:100%}
+  .arena > .side:last-child{order:1;width:100%}
+  .side{gap:8px}
+  .unit{width:100%;flex:1 1 calc(50% - 4px);min-width:0;padding:9px 10px}
+  .unit .un{font-size:14px}
+  .unit .intent{font-size:12px;margin:4px 0 6px}
+
+  /* 手机战斗：战场 → 操作条 → 手牌（手牌可横向滑动） */
+  #btl .arena{order:1}
+  #btl .bbar{order:2}
+  #btl .hand{order:3}
+  #btl #logbox{order:4}
+  .hand{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:10px;
+    padding:8px 0 12px;min-height:0;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .hand .card{flex:0 0 142px;min-width:142px;min-height:172px}
+  .hand .card:hover{transform:none;box-shadow:0 2px 5px var(--shadow)}
+
+  .bbar{gap:12px;padding-top:10px;justify-content:center}
+  .bbar .btn{min-height:44px;flex:0 1 auto}
+  .bbar .dim{flex:1 1 100%;text-align:center}
+  .energy{width:48px;height:48px;font-size:17px}
+  #logbox{height:74px;font-size:12px;padding:6px 9px}
+
+  #mapwrap{height:var(--mapH,56vh);min-height:330px}
+  .node{width:34px;height:34px;margin:-17px 0 0 -17px;font-size:14px}
+  .node.boss{width:42px;height:42px;margin:-21px 0 0 -21px;font-size:16px}
+  .lab{font-size:10px}
+
+  table.sheet{font-size:12px}
+  table.sheet th,table.sheet td{padding:4px 6px}
+}
+@media (max-width:400px){
+  .card{flex:1 1 100%}
+  .hand .card{flex:0 0 132px;min-width:132px}
+  .hpbar{width:88px}
+  .shopgrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body data-page-node-id="SwVSWuVbhiFGkOmie9RCBJ">
+<div id="app" data-page-node-id="L63yEkB5DGOQL7yqJfSlcv">
+  <div id="hud" data-page-node-id="yPT27gbTZPnCVNBgJcKAX0"></div>
+  <div id="screen" data-page-node-id="gI9tKtPwf1NhWidxiwTTDs"></div>
+</div>
+<script>
+/* =========================================================
+   《无尽回响》 Endless Echo
+   回合制卡牌 + 节点推进 · 单机肉鸽
+   规则依据：设计文档 v2.0
+   ========================================================= */
+
+/* ---------------- 基础工具 ---------------- */
+const $ = id => document.getElementById(id);
+const rnd = n => Math.floor(Math.random()*n);
+const pick = a => a[rnd(a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+function sample(a,n){return shuffle(a).slice(0,n);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+// 是否为窄屏（手机）视口
+function isDense(){ return !!(window.matchMedia && window.matchMedia('(max-width:768px)').matches); }
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function wait(ms){return new Promise(r=>setTimeout(r,ms));}
+
+/* ---------------- 元存档（跨局） ---------------- */
+const META_KEY = 'endless_echo_meta_v1';
+const DEFAULT_META = {
+  worldLine:1, echoes:0, deaths:0, bestEcho:0, bestEntropy:0,
+  chars:['walker'], epochs:1, extraPerks:[], extraEvents:0, maps:['standard'],
+  cardUse:{}, lastChar:'walker'
+};
+let M = loadMeta();
+function loadMeta(){
+  try{ const o = JSON.parse(localStorage.getItem(META_KEY)); if(o) return Object.assign({},DEFAULT_META,o); }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_META));
+}
+function saveMeta(){ try{ localStorage.setItem(META_KEY, JSON.stringify(M)); }catch(e){} }
+
+/* ---------------- 角色 ---------------- */
+const CHARS = {
+  walker:{n:'行者',deck:['strike','strike','strike','strike','strike','defend','defend','defend','defend','finish'],
+    d:'标准开局：5 打击 / 4 防御 / 1 终结。均衡，适合熟悉规则。'},
+  sword:{n:'剑士',deck:['strike','strike','strike','strike','strike','strike','defend','defend','heavy','finish'],
+    d:'攻击向：6 打击 / 2 防御 / 重击 / 终结。玻璃大炮。'},
+  warlock:{n:'术士',deck:['strike','strike','strike','defend','defend','defend','burn','break','drain','finish'],
+    d:'技能向：燃烧 / 破甲 / 汲取刃。持续伤害与回复。'}
+};
+
+/* ---------------- 卡牌 ---------------- */
+const CARDS = {
+  strike:  {n:'打击',c:1,t:'atk',r:'common',d:'造成 <b>6</b> 点伤害。',f:g=>atk(g,6)},
+  defend:  {n:'防御',c:1,t:'skl',r:'common',d:'获得 <b>5</b> 点格挡。',f:g=>blk(g,5)},
+  finish:  {n:'终结',c:2,t:'atk',r:'common',d:'造成 <b>12</b> 点伤害。',f:g=>atk(g,12)},
+  heavy:   {n:'重击',c:2,t:'atk',r:'common',d:'造成 <b>14</b> 点伤害。',f:g=>atk(g,14)},
+  twin:    {n:'连击',c:1,t:'atk',r:'common',d:'造成 4 点伤害，<b>两次</b>。',f:g=>{atk(g,4);atk(g,4);}},
+  ironwall:{n:'铁壁',c:2,t:'skl',r:'common',d:'获得 <b>12</b> 点格挡。',f:g=>blk(g,12)},
+  gust:    {n:'疾风',c:0,t:'atk',r:'common',d:'造成 3 点伤害。',f:g=>atk(g,3)},
+  drain:   {n:'汲取刃',c:1,t:'atk',r:'uncommon',d:'造成 5 点伤害，回复 <b>3</b> HP。',f:g=>{atk(g,5);heal(3);}},
+  break:   {n:'破甲',c:1,t:'atk',r:'uncommon',d:'造成 5 点伤害，施加 <b>2</b> 层易伤（受伤 +50%）。',f:g=>{atk(g,5);addBuff(g.target,'vuln',2);}},
+  burn:    {n:'灼烧',c:1,t:'skl',r:'uncommon',d:'施加 <b>4</b> 层燃烧（每回合开始受等额伤害）。',f:g=>{addBuff(g.target,'burn',4);}},
+  focus:   {n:'蓄力',c:1,t:'pow',r:'uncommon',d:'本回合下一张攻击牌伤害<b>翻倍</b>。',f:g=>{g.doubleNext=true;}},
+  power:   {n:'力量',c:1,t:'pow',r:'uncommon',d:'获得 2 点<b>力量</b>（攻击 +2）。',f:g=>{g.powers.str+=2;}},
+  agility: {n:'敏捷',c:1,t:'pow',r:'uncommon',d:'获得 2 点<b>敏捷</b>（格挡 +2）。',f:g=>{g.powers.dex+=2;}},
+  insight: {n:'洞察',c:0,t:'skl',r:'uncommon',d:'抽 <b>2</b> 张牌。',f:g=>draw(2)},
+  surge:   {n:'能量涌动',c:0,t:'skl',r:'rare',d:'获得 <b>1</b> 点能量。',f:g=>{g.energy+=1;}},
+  sbash:   {n:'盾击',c:1,t:'atk',r:'uncommon',d:'造成等同于<b>当前格挡</b>的伤害。',f:g=>atk(g,g.block)},
+  sacri:   {n:'献祭之刃',c:0,t:'atk',r:'uncommon',d:'失去 3 HP，造成 10 点伤害。',f:g=>{loseHp(3,'献祭之刃');atk(g,10);}},
+  echostep:{n:'回响步',c:1,t:'skl',r:'common',d:'获得 5 点格挡，抽 1 张牌。',f:g=>{blk(g,5);draw(1);}},
+  exec:    {n:'处决',c:3,t:'atk',r:'rare',d:'造成 <b>25</b> 点伤害。',f:g=>atk(g,25)},
+  whirl:   {n:'旋风',c:2,t:'atk',r:'rare',d:'对<b>所有</b>敌人造成 8 点伤害。',f:g=>{alive(g).forEach(e=>atkTo(g,e,8));}},
+  // 元解锁「新词条·共鸣」等无卡；以下为高稀有度补充
+  mantra:  {n:'真言',c:1,t:'pow',r:'rare',d:'获得 3 点力量与 2 点敏捷。',f:g=>{g.powers.str+=3;g.powers.dex+=2;}},
+  voidcut: {n:'虚空斩',c:1,t:'atk',r:'rare',d:'造成 9 点伤害，抽 1 张牌。',f:g=>{atk(g,9);draw(1);}}
+};
+const CARD_PRICE = {common:60, uncommon:95, rare:140};
+
+/* ---------------- 遗物 ---------------- */
+const RELICS = {
+  bloodstone:{n:'血石',p:130,d:'最大 HP <b>+15</b>，并立即回复 15 HP。',on:()=>{addMaxHp(15);}},
+  core:      {n:'能量核心',p:160,d:'每回合<b>能量上限 +1</b>。'},
+  ironcoat:  {n:'铁甲',p:120,d:'每回合开始时获得 <b>3</b> 点格挡。'},
+  spikes:    {n:'尖刺甲',p:120,d:'受到攻击时<b>反弹 3 点</b>伤害。'},
+  tome:      {n:'智慧之书',p:150,d:'每回合<b>额外抽 1 张</b>牌。'},
+  whetstone: {n:'磨刀石',p:130,d:'所有攻击伤害 <b>+2</b>。'},
+  greedhand: {n:'贪婪之手',p:110,d:'金币获取 <b>+50%</b>。'},
+  amulet:    {n:'复活护符',p:180,d:'致死时回复 35% 最大 HP。<b>每局一次</b>。'},
+  hourglass: {n:'沙漏',p:140,d:'每场战斗第 1 回合额外获得 <b>2 点能量</b>。'},
+  voidbag:   {n:'虚空袋',p:120,d:'每进入新区域，随机获得 <b>1 张卡</b>。'}
+};
+
+/* ---------------- 词条（24 + 元解锁 3） ---------------- */
+const PERKS = {
+  /* 增益 */
+  ember:    {n:'余烬',k:'gain',d:'战斗结束后，保留 <b>1 点能量</b>到下一场战斗第一回合。'},
+  echo:     {n:'回响',k:'gain',d:'每进入新区域，获得 <b>1 张随机卡</b>。'},
+  swift:    {n:'迅捷',k:'gain',d:'每场战斗<b>第一张牌</b>费用为 0。'},
+  tough:    {n:'坚韧',k:'gain',d:'每回合<b>首次</b>受到伤害 −3。'},
+  absorb:   {n:'汲取',k:'gain',d:'每击败一个敌人<b>回复 2 HP</b>。'},
+  insightP: {n:'洞察',k:'gain',d:'每回合<b>额外抽 1 张</b>牌。'},
+  charge:   {n:'蓄能',k:'gain',d:'<b>能量上限 +1</b>。'},
+  sharp:    {n:'锐利',k:'gain',d:'所有攻击伤害 <b>+2</b>。'},
+  /* 代价 */
+  greed:    {n:'贪婪',k:'cost',d:'商店价格 ×2；精英金币掉落 ×2。'},
+  brittle:  {n:'脆皮',k:'cost',d:'最大 HP −20%；每击败一个 Boss 回复 30% 最大 HP。',on:()=>{S.maxHp=Math.round(S.maxHp*0.8);S.hp=Math.min(S.hp,S.maxHp);}},
+  heavy2:   {n:'沉重',k:'cost',d:'每回合只能打出 <b>3 张</b>牌；所有伤害 +50%。'},
+  barehand: {n:'赤手',k:'cost',d:'<b>无法获得格挡</b>；所有攻击 +8 伤害。'},
+  allin:    {n:'孤注',k:'cost',d:'每场战斗开始失去 5 HP；每回合<b>能量 +2</b>。'},
+  offer:    {n:'献祭',k:'cost',d:'每区域随机删 1 张卡；每区域获得 <b>1 个遗物</b>。'},
+  countdown:{n:'倒计时',k:'cost',d:'第 10 回合起每回合 −5 HP；伤害每回合 +1。'},
+  barren:   {n:'贫瘠',k:'cost',d:'金币获取 −50%；卡牌奖励变为<b>四选一</b>。'},
+  /* 混乱 */
+  disorder: {n:'错乱',k:'chaos',d:'获得时，本区域所有未探索节点<b>类型重新随机</b>。',on:rerollNodes},
+  mimic:    {n:'拟态',k:'chaos',d:'敌人随机获得你卡组中的 1 张卡，并可能使用。'},
+  prolif:   {n:'增殖',k:'chaos',d:'地图节点数 <b>+50%</b>。'},
+  reverse:  {n:'逆流',k:'chaos',d:'回合结束<b>不弃手牌</b>，手牌留到下回合。'},
+  mirror:   {n:'镜像',k:'chaos',d:'战斗开始时复制敌人首个意图（攻击 → 获得等体格挡）。'},
+  collapse: {n:'崩塌',k:'chaos',d:'每通过 3 个节点，随机 <b>1 个</b>未探索节点消失。'},
+  swap:     {n:'置换',k:'chaos',d:'战斗开始时，当前 HP 与格挡数值<b>互换</b>。'},
+  ownerless:{n:'无主',k:'chaos',d:'每场战斗只有<b>一半遗物</b>生效（随机重排）。'},
+  /* 元解锁扩展 */
+  resonance:{n:'共鸣',k:'gain',d:'每打出 3 张牌，回复 1 HP。',extra:true},
+  nothing:  {n:'虚无',k:'cost',d:'能量上限 −1；每张牌伤害 <b>+4</b>。',extra:true},
+  eternal:  {n:'永劫',k:'chaos',d:'每场战斗开始时，随机 1 张手牌费用变为 0。',extra:true}
+};
+const PERK_IDS = Object.keys(PERKS);
+
+/* ---------------- 纪元 ---------------- */
+const EPOCHS = [
+  {n:'原初',d:'无规则变化。'},
+  {n:'逆流',d:'地图自下而上推进，Boss 位于底层。'},
+  {n:'加速',d:'每回合抽 <b>7 张</b>牌；敌人攻击 <b>+30%</b>。'},
+  {n:'学习',d:'敌人记录你最常使用的卡牌类型，并对其进行<b>抗性</b>（该类型伤害 −30%）。'},
+  {n:'游移',d:'每通过 2 层，剩余节点<b>重新排列</b>。'},
+  {n:'双生',d:'每场战斗出现 <b>2 个</b>敌人（各自属性 ×0.75）。'},
+  {n:'沉默',d:'每区域<b>禁用 1 个</b>卡牌类型（攻击/防御/技能）。'},
+  {n:'熵增',d:'每区域熵 <b>+2</b> 而非 +1。'}
+];
+
+/* ---------------- 事件 ---------------- */
+const EVENTS = [
+  {t:'一扇没有把手的门。',o:[
+    {x:'推开（50% 获得稀有卡，50% 失去 15 HP）',f:()=>{ if(Math.random()<.5){ const c=randomRareCard(); S.deck.push(c); return '门后是一张卡：'+CARDS[c].n; } loseHp(15,'无把手的门'); return '门后是虚空，你失去了 15 HP。'; }},
+    {x:'绕开（获得 30 金币）',f:()=>{ gainGold(30); return '你绕开门，拾得 30 金币。'; }},
+    {x:'砸碎（熵 +1，获得 1 条混乱词条）',f:()=>{ addEntropy(1); const p=gainPerkByKind('chaos'); return p? '碎裂之声回荡。熵 +1，获得词条「'+PERKS[p].n+'」。' : '碎裂之声回荡。熵 +1，但已无词条可给。'; }}
+  ]},
+  {t:'一具与自己相同的尸体，口袋里有东西。',o:[
+    {x:'搜刮（获得 60 金币，失去 8 HP）',f:()=>{ gainGold(60); loseHp(8,'尸体的口袋'); return '你拿到 60 金币，也被划伤了。'; }},
+    {x:'埋葬（回复 18 HP）',f:()=>{ heal(18); return '你埋葬了它，伤口愈合（+18 HP）。'; }},
+    {x:'取走它的卡（随机获得 1 张卡，最大 HP −5）',f:()=>{ S.maxHp-=5; S.hp=Math.min(S.hp,S.maxHp); const c=randomCardId(); S.deck.push(c); return '获得卡牌「'+CARDS[c].n+'」，最大 HP −5。'; }}
+  ]},
+  {t:'一个声音问你：愿意用记忆换力量吗？',o:[
+    {x:'同意（删去 1 张打击，获得 1 个遗物）',f:()=>{ const i=S.deck.indexOf('strike'); if(i>=0)S.deck.splice(i,1); giveRelic(); return '记忆缺了一角，手里多了一件遗物。'; }},
+    {x:'拒绝（获得 25 金币）',f:()=>{ gainGold(25); return '声音消失了，留下 25 金币。'; }}
+  ]},
+  {t:'回响之池。水面映出你尚未做出的选择。',o:[
+    {x:'触碰（当前 HP 与格挡概念互换——获得词条「置换」）',f:()=>{ addPerk('swap'); return '你获得了词条「置换」。'; }},
+    {x:'饮水（最大 HP +8）',f:()=>{ addMaxHp(8); return '最大 HP +8。'; }},
+    {x:'离开（抽 1 张额外起始手牌——获得词条「洞察」）',f:()=>{ addPerk('insightP'); return '你获得了词条「洞察」。'; }}
+  ]},
+  {t:'坍塌的商队。货物散落一地，还有气息微弱的幸存者。',o:[
+    {x:'救人（失去 10 HP，获得 1 个遗物）',f:()=>{ loseHp(10,'坍塌的商队'); giveRelic(); return '你救下了他，他留下了一件遗物。'; }},
+    {x:'取货（获得 55 金币）',f:()=>{ gainGold(55); return '你拿走了货物（+55 金币）。'; }},
+    {x:'焚烧（熵 +1，获得 40 金币）',f:()=>{ addEntropy(1); gainGold(40); return '火焰吞噬一切。熵 +1，+40 金币。'; }}
+  ]},
+  {t:'一位老者在墙上刻着数字，那是你死去的世界线编号。',o:[
+    {x:'抹去它（熵 −1，失去 20 HP）',f:()=>{ S.entropy=Math.max(0,S.entropy-1); loseHp(20,'刻痕'); return '数字消失了。熵 −1，−20 HP。'; }},
+    {x:'加上一笔（熵 +1，回复 20 HP）',f:()=>{ addEntropy(1); heal(20); return '你为未来添了一笔。熵 +1，+20 HP。'; }},
+    {x:'静立（获得 1 条增益词条）',f:()=>{ const p=gainPerkByKind('gain'); return p? '你获得词条「'+PERKS[p].n+'」。' : '你静立许久，此地的回响已尽。'; }}
+  ]},
+  {t:'——元解锁事件·锈钟。',extra:true,o:[
+    {x:'上紧发条（每回合能量上限 +1，最大 HP −10）',f:()=>{ addPerk('charge'); S.maxHp-=10; S.hp=Math.min(S.hp,S.maxHp); return '获得词条「蓄能」，最大 HP −10。'; }},
+    {x:'砸碎它（获得 90 金币）',f:()=>{ gainGold(90); return '齿轮散落，换来 90 金币。'; }}
+  ]},
+  {t:'——元解锁事件·双面镜。',extra:true,o:[
+    {x:'照自己（复制牌组中 1 张随机卡）',f:()=>{ const c=pick(S.deck); S.deck.push(c); return '你多了一张「'+CARDS[c].n+'」。'; }},
+    {x:'照敌人（获得 70 金币，敌人下场战斗攻击 +20%）',f:()=>{ gainGold(70); S.nextBattleEnemyBuff=.2; return '+70 金币，但下一场战斗敌人攻击 +20%。'; }}
+  ]}
+];
+
+/* ---------------- 敌人 ---------------- */
+const ENAMES = {
+  normal:['游荡者','灰烬虫','影爪','石卫','回声兵','锈刃'],
+  elite:['断罪者','双头犬','熵之眼','缄默修士'],
+  boss:['守望者·初相','缄默之喉','千面之冠','终末·无相']
+};
+
+/* ---------------- 全局状态 ---------------- */
+let S = null;      // 本局
+let G = null;      // 战斗
+let LOG = [];
+function log(s,hi){ LOG.push({s,hi:!!hi}); if(LOG.length>120)LOG.shift(); renderLog(); }
+function renderLog(){
+  const b = $('logbox'); if(!b) return;
+  b.innerHTML = LOG.slice(-40).map(l=>'<p class="'+(l.hi?'hi':'')+'">'+esc(l.s)+'</p>').join('');
+  b.scrollTop = b.scrollHeight;
+}
+function floatMsg(t){
+  const d=document.createElement('div'); d.className='floatmsg'; d.textContent=t;
+  document.body.appendChild(d); setTimeout(()=>d.remove(),1000);
+}
+
+/* ---------------- 局初始化 ---------------- */
+function newRun(charId){
+  M.worldLine = (M.worldLine||1);
+  const ep = rnd(M.epochs);                                  // 抽纪元
+  const startPerk = gainPerkByKind('gain', true)
+    || PERK_IDS.filter(id=>PERKS[id].k==='gain')[0] || PERK_IDS[0];   // 抽起始词条（空池兜底）
+  S = {
+    worldLine:M.worldLine, epoch:ep, epochName:EPOCHS[ep].n, epochDesc:EPOCHS[ep].d,
+    char:charId, charName:CHARS[charId].n,
+    entropy:0, region:1, layer:0, nodeIdx:-1,
+    hp:60, maxHp:60, gold:0, energyMax:3,
+    deck:CHARS[charId].deck.slice(),
+    relics:[], perks:[startPerk],
+    perksThisRegion:0, nodesCleared:0, kills:{normal:0,elite:0,boss:0},
+    map:null, visited:[], carriedEnergy:0, nextBattleEnemyBuff:0,
+    bannedType:null, contradictions:[], amuletUsed:false, phase:'map',
+    history:[]
+  };
+  LOG = [];
+  if(PERKS[startPerk] && PERKS[startPerk].gain) {}
+  applyPerkOnGain(startPerk);
+  log('世界线 #'+S.worldLine+' · 纪元「'+S.epochName+'」· 起始词条「'+PERKS[startPerk].n+'」');
+  genMap();
+  S.phase='map';
+  render();
+}
+
+/* ---------------- 地图生成 ---------------- */
+function layerCount(){ return 8 + Math.floor(S.entropy/5)*2; }
+function nodeCountFor(i,L,shape){
+  if(i===0) return 2;
+  if(i===L-1) return 1;
+  let n;
+  if(shape==='tower') n = 1 + rnd(2);          // 窄塔 1-2
+  else if(shape==='web') n = 3 + rnd(2);       // 蛛网 3-4
+  else n = 2 + rnd(2);                         // 标准 2-3
+  if(hasPerk('prolif')) n = Math.max(2,Math.round(n*1.5));
+  return n;
+}
+function pickNodeType(ln,L){
+  if(ln===1) return 'battle';
+  if(ln===L) return 'boss';
+  if(ln===4) return 'elite';
+  let w;
+  if(ln===L-1) w={event:20,shop:40,altar:40};
+  else if(ln<=3) w={battle:60,event:25,shop:10,altar:5};
+  else w={battle:55,event:20,shop:10,elite:10,altar:5};
+  const steps = Math.floor(S.entropy/5);
+  for(let k=0;k<steps;k++){
+    if(w.shop) w.shop=Math.max(0,w.shop-10);
+    w.altar=(w.altar||0)+5;
+  }
+  if(S.entropy>=5){
+    w.anomaly = 10;
+    const take=10, from = w.battle>=w.event?['battle','event']:['event','battle'];
+    for(const f of from){ if(w[f]>=take){ w[f]-=take; break; } }
+  }
+  let total=0; for(const k in w) total+=w[k];
+  let r=Math.random()*total;
+  for(const k in w){ r-=w[k]; if(r<=0) return k; }
+  return 'battle';
+}
+function genMap(){
+  const L = layerCount();
+  const shape = pick(M.maps);
+  const layers=[];
+  for(let i=0;i<L;i++){
+    const n = nodeCountFor(i,L,shape);
+    const arr=[];
+    for(let j=0;j<n;j++){
+      arr.push({i,j,type:i===L-1?'boss':pickNodeType(i+1,L),gone:false,data:null});
+    }
+    layers.push(arr);
+  }
+  // 连边：索引差 ≤1 的近似映射，保证连通
+  for(let i=0;i<L-1;i++){
+    const a=layers[i], b=layers[i+1];
+    a.forEach(nd=>nd.next=[]);
+    if(a.length===1){ b.forEach((_,k)=>a[0].next.push(k)); }
+    else if(b.length===1){ a.forEach(nd=>nd.next.push(0)); }
+    else{
+      a.forEach((nd,k)=>{
+        const center = k*(b.length-1)/(a.length-1);
+        b.forEach((_,t)=>{ if(Math.abs(t-center)<=1) nd.next.push(t); });
+        if(!nd.next.length) nd.next.push(Math.round(center));
+      });
+      // 保证下一层每个节点都有入边
+      b.forEach((_,t)=>{ if(!a.some(nd=>nd.next.includes(t))){
+        const k = Math.round(t*(a.length-1)/(b.length-1));
+        a[clamp(k,0,a.length-1)].next.push(t);
+      }});
+    }
+  }
+  layers[L-1].forEach(nd=>nd.next=[]);
+  S.map={L,layers,shape};
+  S.layer=0; S.nodeIdx=-1;
+}
+function rerollNodes(){
+  if(!S||!S.map) return;
+  S.map.layers.forEach((arr,i)=>{
+    arr.forEach(nd=>{ if(!S.visited.includes(i+'-'+nd.j) && i!==S.map.L-1) nd.type=pickNodeType(i+1,S.map.L); });
+  });
+}
+function collapseNode(){
+  if(!S||!S.map) return;
+  const cand=[];
+  S.map.layers.forEach((arr,i)=>arr.forEach(nd=>{
+    if(!nd.gone && !S.visited.includes(i+'-'+nd.j) && nd.type!=='boss') cand.push(nd);
+  }));
+  if(cand.length){ const n=pick(cand); n.gone=true; log('崩塌：一个节点消失了。'); }
+}
+
+/* ---------------- 节点推进 ---------------- */
+function availableNodes(){
+  const {layers,L}=S.map;
+  if(S.nodeIdx<0) return layers[0].map((n,j)=>({i:0,j})).filter(p=>!layers[0][p.j].gone);
+  const cur = layers[S.layer][S.nodeIdx];
+  return (cur.next||[]).filter(j=>!layers[S.layer+1][j].gone).map(j=>({i:S.layer+1,j}));
+}
+function enterNode(i,j){
+  S.layer=i; S.nodeIdx=j;
+  const key=i+'-'+j;
+  if(!S.visited.includes(key)) S.visited.push(key);
+  const nd=S.map.layers[i][j];
+  S.nodesCleared++;
+  if(hasPerk('collapse') && S.nodesCleared%3===0) collapseNode();
+  if(S.epoch===4 && S.nodesCleared%2===0) wanderNodes();
+  if(nd.type==='battle'||nd.type==='elite'||nd.type==='boss') startBattle(nd.type);
+  else if(nd.type==='event') showEvent();
+  else if(nd.type==='shop') showShop();
+  else if(nd.type==='altar') showAltar();
+  else if(nd.type==='anomaly') showAnomaly();
+  else { S.phase='map'; render(); }
+}
+function wanderNodes(){
+  // 游移纪元：剩余未探索节点类型重排
+  const types=[];
+  S.map.layers.forEach((arr,i)=>arr.forEach(nd=>{
+    if(!nd.gone && !S.visited.includes(i+'-'+nd.j) && nd.type!=='boss') types.push(nd.type);
+  }));
+  S.map.layers.forEach((arr,i)=>arr.forEach(nd=>{
+    if(!nd.gone && !S.visited.includes(i+'-'+nd.j) && nd.type!=='boss') nd.type=pick(types.length?types:['battle']);
+  }));
+  log('游移：剩余节点重新排列。');
+}
+
+/* ---------------- 战斗 ---------------- */
+function scale(){ return 1 + 0.15*(S.region-1) + 0.05*S.entropy; }
+function mkEnemy(kind){
+  const s = scale();
+  let hp, atk, name;
+  if(kind==='normal'){ hp=25*s; atk=9*s; name=pick(ENAMES.normal); }
+  else if(kind==='elite'){ hp=70*s; atk=16*s; name=pick(ENAMES.elite); }
+  else { hp=140*s; atk=22*s; name = S.entropy>=20 && S.finalBoss ? '终末·无相' : pick(ENAMES.boss); }
+  if(kind==='final'){ hp=140*s*1.6; atk=22*s*1.2; name='终末·无相'; }
+  if(S.nextBattleEnemyBuff){ atk*=(1+S.nextBattleEnemyBuff); S.nextBattleEnemyBuff=0; }
+  if(S.epoch===2 && kind!=='final') atk*=1.3; // 加速纪元
+  if(S.epoch===5 && (kind==='normal')) { hp*=0.75; atk*=0.75; } // 双生平衡
+  if(S.epoch===7 && kind!=='final'){ /* 熵增无战斗变化 */ }
+  hp=Math.round(hp); atk=Math.round(atk);
+  const e={name,hp,maxHp:hp,atk:baseAtk(atk),block:0,burn:0,vuln:0,str:0,kind,mimic:null,intent:null,perks:[]};
+  if(kind==='elite' && S.entropy>=8) e.perks.push(pick(['狂暴','硬化','再生']));
+  if(kind==='boss' && S.entropy>=15) e.perks.push(pick(['狂暴','硬化','再生','共鸣']));
+  if(e.perks.includes('硬化')) e.maxHp=Math.round(e.maxHp*1.15), e.hp=e.maxHp;
+  if(e.perks.includes('狂暴')) e.str+=4;
+  if(hasPerk('mimic') && Math.random()<0.7){ e.mimic=pick(S.deck); }
+  return e;
+}
+function baseAtk(v){ return v; }
+function startBattle(type){
+  const enemies=[];
+  if(type==='final'){ enemies.push(mkEnemy('final')); }
+  else if(type==='boss'){ enemies.push(mkEnemy('boss')); }
+  else if(type==='elite'){ enemies.push(mkEnemy('elite')); }
+  else{
+    enemies.push(mkEnemy('normal'));
+    if(S.epoch===5) enemies.push(mkEnemy('normal'));
+  }
+  // 无主：随机重排遗物，只保留一半生效
+  let activeRelics = S.relics.slice();
+  if(hasPerk('ownerless')){ activeRelics = shuffle(S.relics).slice(0, Math.ceil(S.relics.length/2)); }
+  G = {
+    type, enemies, turn:0, energy:0, maxEnergy:0, block:0,
+    powers:{str:0,dex:0}, hand:[], drawP:[], disc:[], played:0,
+    doubleNext:false, firstHitUsed:false, activeRelics, target:0,
+    over:false, resonanceCount:0, freeCards:new Set(), extraDraw:0
+  };
+  S.phase='battle';
+  let me = 3 + (hasPerk('charge')?1:0) + (hasRelicA('core')?1:0) + (hasPerk('nothing')?-1:0);
+  G.maxEnergy = Math.max(1, Math.min(6, me));
+  if(hasPerk('allin')){ G.maxEnergy += 2; loseHp(5,'孤注'); }
+  if(hasPerk('swap')){ const t=S.hp; S.hp=clamp(G.block,1,S.maxHp); G.block=clamp(t,0,999); log('置换：HP 与格挡数值互换。'); }
+  S.deck.forEach(id=>G.drawP.push(id));
+  G.drawP = shuffle(G.drawP);
+  log('—— 战斗开始：'+enemies.map(e=>e.name).join(' / ')+' ——');
+  if(G.enemies[0] && G.enemies[0].mimic) log('拟态：'+G.enemies[0].name+' 获得了你的「'+CARDS[G.enemies[0].mimic].n+'」。');
+  // 镜像：复制敌人首个意图
+  rollIntents();
+  if(hasPerk('mirror')){
+    const it=G.enemies[0].intent;
+    if(it && it.k==='attack'){ blk(G, Math.round(it.v)); log('镜像：你复制了意图，获得 '+Math.round(it.v)+' 点格挡。'); }
+    else if(it){ log('镜像：你复制了「'+(it.k==='defend'?'防御':'强化')+'」意图，力量 +1。'); G.powers.str+=1; }
+  }
+  startTurn(true);
+  render();
+}
+function alive(g){ return g.enemies.filter(e=>e.hp>0); }
+function hasPerk(id){ return S && S.perks.includes(id); }
+function hasRelic(id){ return S && S.relics.includes(id); }
+function hasRelicA(id){ return G && G.activeRelics.includes(id); }
+
+function rollIntents(){
+  G.enemies.forEach(e=>{
+    if(e.hp<=0){ e.intent=null; return; }
+    const r=Math.random();
+    let k;
+    if(r<0.62) k='attack'; else if(r<0.8) k='defend'; else k='buff';
+    let v=0;
+    if(k==='attack') v=Math.round(e.atk + e.str);
+    else if(k==='defend') v=Math.round(6*scale());
+    const hide = S.entropy>=12 && Math.random()<0.35;
+    e.intent = {k, v, hidden:hide};
+  });
+}
+function intentText(e){
+  if(!e.intent) return '';
+  if(e.intent.hidden) return '<b>未知</b>';
+  if(e.intent.k==='attack') return '攻击 <b>'+e.intent.v+'</b>';
+  if(e.intent.k==='defend') return '防御 '+e.intent.v;
+  return '强化（力量 +3）';
+}
+function startTurn(first){
+  G.turn++;
+  G.played=0; G.firstHitUsed=false;
+  if(!(S.entropy>=25 && S.contradictions.includes('blockNoClear'))) G.block=0;
+  else log('规则矛盾：格挡不再清零。');
+  G.energy = G.maxEnergy + (first && hasRelicA('hourglass') ? 2 : 0) + S.carriedEnergy;
+  if(S.carriedEnergy){ log('余烬：保留 '+S.carriedEnergy+' 点能量。'); S.carriedEnergy=0; }
+  if(hasRelicA('ironcoat')) blk(G,3);
+  if(hasPerk('eternal') && G.hand.length){
+    const i=rnd(G.hand.length); G.freeCards.add(i); log('永劫：一张手牌费用变为 0。');
+  }
+  let n = 5 + (hasPerk('insightP')?1:0) + (hasRelicA('tome')?1:0) + G.extraDraw;
+  if(S.epoch===2) n = Math.max(n,7);
+  if(S.epoch===6) { /* 学习无抽牌变化 */ }
+  draw(n);
+  // 燃烧结算在敌人回合结束后统一；此处仅提示
+  if(hasPerk('countdown') && G.turn>=10){ log('倒计时：−5 HP',true); loseHp(5,'倒计时'); if(S.hp<=0) return gameOver(); }
+  if(hasPerk('resonance')) G.resonanceCount=0;
+  render();
+}
+function draw(n){
+  for(let k=0;k<n;k++){
+    if(!G.drawP.length){ G.drawP=shuffle(G.disc); G.disc=[]; if(!G.drawP.length) return; }
+    G.hand.push(G.drawP.pop());
+  }
+}
+function cardCost(id){
+  const c = CARDS[id].c;
+  return c;
+}
+function playCard(idx){
+  if(G.over) return;
+  const id=G.hand[idx]; const C=CARDS[id];
+  if(S.bannedType && C.t===S.bannedType){ log('沉默纪元：该类型被禁用（'+typeName(S.bannedType)+'）。'); return; }
+  let cost = cardCost(id);
+  if(G.played===0 && hasPerk('swift')) cost=0;
+  if(G.freeCards.has(idx)) cost=0;
+  if(G.energy<cost) { log('能量不足。'); render(); return; }
+  if(hasPerk('heavy2') && G.played>=3){ log('沉重：本回合出牌已达上限。'); render(); return; }
+  G.energy-=cost; G.played++;
+  CUR_CARD_TYPE = C.t;
+  G.hand.splice(idx,1);
+  if(hasPerk('resonance')){ G.resonanceCount++; if(G.resonanceCount%3===0) heal(1); }
+  M.cardUse[id]=(M.cardUse[id]||0)+1; saveMeta();
+  if(C.t==='pow') { C.f(G); }
+  else C.f(G);
+  G.disc.push(id);
+  checkBattleEnd();
+  render();
+}
+function typeName(t){ return t==='atk'?'攻击':t==='skl'?'技能':'能力'; }
+
+function dmgVal(g,base){
+  let d = base + g.powers.str + (hasPerk('sharp')?2:0) + (hasRelicA('whetstone')?2:0)
+        + (hasPerk('barehand')?8:0) + (hasPerk('nothing')?4:0);
+  if(hasPerk('countdown')) d += Math.max(0,g.turn-1);
+  if(hasPerk('heavy2')) d = Math.floor(d*1.5);
+  if(g.doubleNext){ d*=2; g.doubleNext=false; }
+  return Math.max(0,Math.floor(d));
+}
+function atk(g,v){ const e=alive(g)[g.target]||alive(g)[0]; if(e) atkTo(g,e,v); }
+function atkTo(g,e,v){
+  if(!e||e.hp<=0) return;
+  let d = dmgVal(g,v);
+  if(e.vuln>0) d=Math.floor(d*1.5);
+  if(S.epoch===3 && (M.cardUse && resistType()===currentCardType())) d=Math.floor(d*0.7);
+  if(e.block>0){ const ab=Math.min(e.block,d); e.block-=ab; d-=ab; }
+  e.hp-=d;
+  log('你对 '+e.name+' 造成 '+d+' 点伤害。'+(e.hp<=0?'（已击倒）':''));
+  if(e.hp<=0){
+    if(hasPerk('absorb')) heal(2);
+    if(g.type==='elite') S.kills.elite++;
+    else if(g.type==='boss'||g.type==='final') S.kills.boss++;
+    else S.kills.normal++;
+    if(hasPerk('brittle') && (g.type==='boss'||g.type==='final')) { const h=Math.round(S.maxHp*0.3); S.hp=Math.min(S.maxHp,S.hp+h); log('脆皮：击败 Boss 回复 '+h+' HP。'); }
+  }
+}
+let CUR_CARD_TYPE=null;
+function currentCardType(){ return CUR_CARD_TYPE; }
+function resistType(){
+  const u=M.cardUse||{}; let best=null,bv=0;
+  for(const id in u){ if(u[id]>bv){bv=u[id];best=id;} }
+  return best?CARDS[best].t:null;
+}
+function blk(g,v){
+  if(hasPerk('barehand')){ log('赤手：无法获得格挡。'); return; }
+  const val=Math.max(0,Math.round(v + g.powers.dex));
+  g.block+=val; log('获得 '+val+' 点格挡（当前 '+g.block+'）。');
+}
+function addBuff(e,k,v){ e[k]=(e[k]||0)+v; }
+function heal(v){ S.hp=Math.min(S.maxHp,S.hp+v); log('回复 '+v+' HP（'+S.hp+'/'+S.maxHp+'）。'); }
+// 最大 HP 软上限 150：超出部分收益减半
+function addMaxHp(v){
+  if(S.maxHp + v <= 150){ S.maxHp += v; }
+  else{
+    const room = Math.max(0, 150 - S.maxHp);
+    const over = Math.max(0, v - room);
+    S.maxHp += room + Math.floor(over/2);
+  }
+  S.hp = Math.min(S.hp + v, S.maxHp);
+}
+function loseHp(v,src){
+  S.hp-=v; log('失去 '+v+' HP（'+src+'）。',true);
+  if(S.hp<=0){
+    if(hasRelic('amulet') && !S.amuletUsed){
+      S.amuletUsed=true; S.hp=Math.round(S.maxHp*0.35);
+      log('复活护符：你从死亡边缘返回（'+S.hp+' HP）。');
+    } else gameOver();
+  }
+}
+function gainGold(v){
+  let g=v;
+  if(hasPerk('barren')) g=Math.floor(g*0.5);
+  if(hasRelic('greedhand')) g=Math.floor(g*1.5);
+  S.gold+=g; log('获得 '+g+' 金币（共 '+S.gold+'）。');
+}
+function addEntropy(v){
+  S.entropy+=v;
+  log('熵 +'+v+'（当前 '+S.entropy+'）',true);
+  S.history.push('熵 '+S.entropy);
+}
+function endTurn(){
+  if(G.over) return;
+  if(hasPerk('ember')) S.carriedEnergy=1;
+  if(!hasPerk('reverse')){ G.disc.push(...G.hand); G.hand=[]; }
+  else log('逆流：手牌保留到下回合。');
+  enemyPhase();
+}
+async function enemyPhase(){
+  G.freeCards=new Set();
+  for(const e of G.enemies){
+    if(e.hp<=0) continue;
+    if(e.burn>0){ e.hp-=e.burn; log(e.name+' 受到燃烧 '+e.burn+' 点伤害。'); e.burn--; if(e.hp<=0){ log(e.name+' 被烧毁。'); continue; } }
+    const it=e.intent||{k:'attack',v:Math.round(e.atk)};
+    if(it.k==='defend'){ e.block+=it.v; log(e.name+' 获得 '+it.v+' 点格挡。'); }
+    else if(it.k==='buff'){ e.str+=3; log(e.name+' 强化（力量 +3）。'); }
+    else{
+      let d=Math.round(e.atk + e.str);
+      if(e.mimic && Math.random()<0.5){
+        const C=CARDS[e.mimic];
+        if(C.t==='atk'){ d=Math.max(d,C.v?C.v*1:Math.round(d*0.8)); log(e.name+' 使用「'+C.n+'」。'); }
+        else { e.block+=8; log(e.name+' 使用「'+C.n+'」。'); }
+      }
+      if(!G.firstHitUsed && hasPerk('tough')){ d=Math.max(0,d-3); G.firstHitUsed=true; }
+      if(G.block>0){ const ab=Math.min(G.block,d); G.block-=ab; d-=ab; }
+      if(d>0){ S.hp-=d; log(e.name+' 攻击造成 '+d+' 点伤害。',true); }
+      else log('格挡吸收了 '+e.name+' 的攻击。');
+      if(hasRelicA('spikes') && e.hp>0){ e.hp-=3; log('尖刺反弹 3 点伤害。'); if(e.hp<=0) { if(hasPerk('absorb'))heal(2); log(e.name+' 被反弹致死。'); } }
+      if(S.hp<=0){
+        if(hasRelic('amulet') && !S.amuletUsed){ S.amuletUsed=true; S.hp=Math.round(S.maxHp*0.35); log('复活护符：你从死亡边缘返回。'); }
+        else { render(); return gameOver(); }
+      }
+    }
+    if(e.perks.includes('再生')){ const r=Math.round(e.maxHp*0.03); e.hp=Math.min(e.maxHp,e.hp+r); }
+  }
+  rollIntents();
+  render();
+  await wait(120);
+  startTurn(false);
+}
+function checkBattleEnd(){
+  if(G.over) return;
+  if(alive(G).length===0){
+    G.over=true;
+    S.carriedEnergy = hasPerk('ember') ? 1 : 0;
+    let gold = G.type==='normal'? 20+rnd(16) : G.type==='elite'? 60+rnd(30) : 90+rnd(40);
+    if(G.type==='elite' && hasPerk('greed')) gold*=2;
+    gainGold(gold);
+    S.phase='reward';
+    S.reward={
+      type:G.type,
+      cards: sample(cardPoolIds(), hasPerk('barren')?4:3)
+    };
+    if(G.type==='elite'){ giveRelic(); }
+    if(G.type==='boss'||G.type==='final'){ giveRelic(); }
+    log('战斗胜利。');
+  }
+}
+function cardPoolIds(){
+  const pool=Object.keys(CARDS).filter(id=>CARDS[id].r!=='starter');
+  const out=[];
+  for(let i=0;i<3;i++) out.push(...shuffle(pool).slice(0,4));
+  return out;
+}
+function randomCardId(){ const p=Object.keys(CARDS); return pick(p); }
+function randomRareCard(){ const p=Object.keys(CARDS).filter(id=>CARDS[id].r==='rare'); return pick(p.length?p:['heavy']); }
+
+/* ---------------- 词条 ---------------- */
+function gainPerkByKind(kind, silent){
+  const owned = S ? S.perks : [];
+  let ids = PERK_IDS.filter(id=>{
+    const p=PERKS[id];
+    if(p.k!==kind) return false;
+    if(p.extra && !M.extraPerks.includes(id)) return false;
+    return true;
+  });
+  if(!ids.length) ids = PERK_IDS.filter(id=>PERKS[id].k==='gain' && (!PERKS[id].extra||M.extraPerks.includes(id)));
+  const avail = ids.filter(id=>!(owned||[]).includes(id));
+  if(!avail.length) return null;
+  const id = pick(avail);
+  if(S && !silent) addPerk(id);
+  return id;
+}
+function offerPerks(){
+  const owned=S.perks;
+  const steps=Math.floor(S.entropy/5);
+  let wGain=50, wCost=30, wChaos=20+steps*5;
+  const pool=PERK_IDS.filter(id=>{
+    const p=PERKS[id];
+    if(owned.includes(id)) return false;
+    if(p.extra && !M.extraPerks.includes(id)) return false;
+    return true;
+  });
+  const out=[];
+  while(out.length<3 && pool.length){
+    let r=Math.random()*(wGain+wCost+wChaos);
+    let kind = r<wGain?'gain': r<wGain+wCost?'cost':'chaos';
+    let cand=pool.filter(id=>PERKS[id].k===kind && !out.includes(id));
+    if(!cand.length) cand=pool.filter(id=>!out.includes(id));
+    if(!cand.length) break;
+    out.push(pick(cand));
+  }
+  return out;
+}
+function addPerk(id){
+  if(!PERKS[id] || !S) return;
+  if(S.perks.includes(id)) return;
+  S.perks.push(id); applyPerkOnGain(id); log('获得词条「'+PERKS[id].n+'」。');
+}
+function applyPerkOnGain(id){
+  const p=PERKS[id];
+  if(p && p.on) p.on();
+}
+function giveRelic(){
+  const pool=Object.keys(RELICS).filter(r=>!S.relics.includes(r));
+  if(!pool.length){ S.gold+=60; log('遗物已集齐，转化为 60 金币。'); return null; }
+  const id=pick(pool); S.relics.push(id);
+  if(RELICS[id].on) RELICS[id].on();
+  log('获得遗物「'+RELICS[id].n+'」：'+RELICS[id].d.replace(/<[^>]+>/g,''));
+  return id;
+}
+
+/* ---------------- 事件 ---------------- */
+function showEvent(){
+  const pool = EVENTS.filter(e=>!e.extra || M.extraEvents>0);
+  const ev = pick(pool.length?pool:EVENTS);
+  S.phase='event'; S.event=ev; S.eventResult=null; S.eventDone=false;
+  render();
+}
+function chooseEvent(i){
+  const ev=S.event; const r=ev.o[i].f();
+  S.eventResult=r; log(r);
+  S.eventDone=true;
+  render();
+}
+function showAnomaly(){
+  S.phase='anomaly';
+  S.anomaly = pick(['mirror','collapse','prolif']);
+  render();
+}
+function resolveAnomaly(){
+  const a=S.anomaly;
+  if(a==='mirror'){
+    log('镜像房：你面对自己的复制体。');
+    startBattle('elite'); // 复制体按精英强度
+    G.enemies[0].name='你的复制体'; G.enemies[0].mimic=pick(S.deck);
+    return;
+  }
+  if(a==='collapse'){
+    collapseNode(); collapseNode();
+    log('崩塌房：本区域随机 2 个节点消失。');
+  }
+  if(a==='prolif'){
+    S.map.layers.forEach((arr,i)=>arr.forEach(nd=>{
+      if(!nd.gone && !S.visited.includes(i+'-'+nd.j) && nd.type!=='boss') nd.type='battle';
+    }));
+    log('增殖房：本区域剩余节点全部变为战斗。');
+  }
+  S.phase='map'; render();
+}
+
+/* ---------------- 商店 ---------------- */
+function price(base){ let p=base*(1+S.entropy*0.1); if(hasPerk('greed')) p*=2; return Math.round(p); }
+function showShop(){
+  S.phase='shop';
+  S.shop={
+    cards: sample(Object.keys(CARDS).filter(id=>CARDS[id].r!=='starter'),3),
+    relic: (()=>{const p=Object.keys(RELICS).filter(r=>!S.relics.includes(r)); return p.length?pick(p):null;})(),
+    removeUsed:false, removePrice:price(75)
+  };
+  render();
+}
+function buyCard(id,i){
+  const p=price(CARD_PRICE[CARDS[id].r]);
+  if(S.gold<p){ log('金币不足。'); render(); return; }
+  S.gold-=p; S.deck.push(id); S.shop.cards.splice(i,1);
+  log('购入「'+CARDS[id].n+'」（-'+p+' 金币）。'); render();
+}
+function buyRelic(){
+  const id=S.shop.relic; if(!id) return;
+  const p=price(RELICS[id].p);
+  if(S.gold<p){ log('金币不足。'); render(); return; }
+  S.gold-=p; S.relics.push(id); if(RELICS[id].on) RELICS[id].on(); S.shop.relic=null;
+  log('购入遗物「'+RELICS[id].n+'」。'); render();
+}
+function removeCard(){
+  if(S.shop.removeUsed) return;
+  const p=S.shop.removePrice;
+  if(S.gold<p){ log('金币不足。'); render(); return; }
+  S.phase='removecard'; render();
+}
+function blackMarket(){
+  S.phase='blackmarket'; render();
+}
+function bmDeal(kind){
+  if(kind==='card'){ loseHp(12,'黑市'); const c=randomRareCard(); S.deck.push(c); log('黑市：以 12 HP 换来「'+CARDS[c].n+'」。'); }
+  if(kind==='relic'){ loseHp(22,'黑市'); giveRelic(); }
+  if(kind==='hp'){ const g=S.gold; if(g<40){log('金币不足。');} else { S.gold-=g; const h=Math.round(S.maxHp*0.25); S.hp=Math.min(S.maxHp,S.hp+h); log('黑市：倾尽金币，回复 '+h+' HP。'); } }
+  if(S.hp<=0) return gameOver();
+  S.phase='shop'; render();
+}
+
+/* ---------------- 祭坛 ---------------- */
+function showAltar(){
+  S.phase='altar';
+  const gainPool = PERK_IDS.filter(id=>PERKS[id].k==='gain' && !S.perks.includes(id));
+  if(!gainPool.length){ log('祭坛空无一物：你已获得所有增益词条。'); S.phase='map'; render(); return; }
+  const gain = pick(gainPool);
+  let strong = S.entropy>=10 && Math.random()<0.5;
+  let costPool = PERK_IDS.filter(id=>PERKS[id].k===(strong?'chaos':'cost') && !S.perks.includes(id) && id!==gain);
+  if(!costPool.length){ strong=false; costPool = PERK_IDS.filter(id=>PERKS[id].k==='cost' && !S.perks.includes(id) && id!==gain); }
+  const cost = costPool.length ? pick(costPool) : null;
+  S.altar={gain, cost, strong, done:false};
+  render();
+}
+function acceptAltar(){
+  if(!S.altar || S.altar.done) return;
+  addPerk(S.altar.gain);
+  if(S.altar.cost) addPerk(S.altar.cost);
+  if(S.altar.strong){ const g2=gainPerkByKind('gain'); if(g2) addPerk(g2); }
+  S.altar.done=true; render();
+}
+
+/* ---------------- 区域结算 ---------------- */
+function regionClear(){
+  S.phase='regionend';
+  if(hasPerk('echo')) { const c=randomCardId(); S.deck.push(c); log('回响：获得卡牌「'+CARDS[c].n+'」。'); }
+  if(hasRelic('voidbag')) { const c=randomCardId(); S.deck.push(c); log('虚空袋：获得卡牌「'+CARDS[c].n+'」。'); }
+  if(hasPerk('offer')){ giveRelic(); const i=rnd(S.deck.length); S.deck.splice(i,1); log('献祭：随机删去 1 张卡。'); }
+  if(S.entropy>=30){ const i=rnd(S.deck.length); if(i>=0){ log('熵 30+：随机删除 1 张卡。',true); S.deck.splice(i,1); } }
+  S.perkOffer = offerPerks();
+  render();
+}
+function chooseRegionPerk(id){
+  addPerk(id);
+  // 熵推进
+  addEntropy(S.epoch===7?2:1);
+  applyEntropyEvents();
+  S.region++;
+  if(hasPerk('echo')){ const c=randomCardId(); S.deck.push(c); }
+  S.nodesCleared=0;
+  // 沉默纪元：禁用类型
+  S.bannedType = S.epoch===6 ? pick(['atk','skl','pow']) : null;
+  if(S.bannedType) log('沉默纪元：本区域禁用「'+typeName(S.bannedType)+'」类型卡牌。',true);
+  // 规则矛盾层
+  S.contradictions=[];
+  if(S.entropy>=25){
+    S.contradictions = sample(['blockNoClear','enemyFirst'],1);
+    log('熵 25+：规则开始自我矛盾 —— '+S.contradictions.map(c=>c==='blockNoClear'?'格挡不再清零':'敌人先手').join('、'),true);
+  }
+  if(S.entropy>=20){
+    S.finalBoss=true;
+    S.phase='map';
+    // 终局 Boss：直接开战
+    log('熵 ≥ 20：终局 Boss 现身。',true);
+    startBattle('final');
+    return;
+  }
+  genMap();
+  S.phase='map';
+  render();
+}
+function applyEntropyEvents(){
+  const e=S.entropy;
+  if(e===5) log('熵 5：解锁「异常节点」，地图层数 +2。',true);
+  if(e===8) log('熵 8：精英开始获得额外词条。',true);
+  if(e===12) log('熵 12：部分敌人意图开始隐藏。',true);
+  if(e===15) log('熵 15：Boss 获得强化词条，地图层数 +2。',true);
+  if(e===18) log('熵 18：解锁黑市。',true);
+  if(e===20) log('熵 20：终局 Boss 出现。',true);
+  if(e>20) log('超越模式：熵 '+e+'，所有敌人属性 +'+(e-20)*10+'%，词条池全开。',true);
+}
+function afterFinalBoss(){
+  S.phase='transcend'; render();
+}
+function transcend(){
+  addEntropy(1); applyEntropyEvents();
+  S.region++; S.finalBoss=true; S.nodesCleared=0;
+  genMap(); S.phase='map'; render();
+}
+
+/* ---------------- 结算 ---------------- */
+function score(){
+  return S.region*30 + S.entropy*10 + S.kills.elite*15 + S.kills.boss*50 + Math.floor(Math.max(0,S.hp)/2);
+}
+function gameOver(){
+  const sc=score();
+  M.echoes+=sc; M.deaths++; M.worldLine++;
+  M.bestEcho=Math.max(M.bestEcho,sc); M.bestEntropy=Math.max(M.bestEntropy,S.entropy);
+  M.epochs = Math.min(EPOCHS.length, 1 + Math.floor(M.deaths/5));
+  saveMeta();
+  S.phase='gameover'; S.finalScore=sc;
+  render();
+}
+function endRun(){
+  const sc=score();
+  M.echoes+=sc; M.deaths++; M.worldLine++;
+  M.bestEcho=Math.max(M.bestEcho,sc); M.bestEntropy=Math.max(M.bestEntropy,S.entropy);
+  M.epochs = Math.min(EPOCHS.length, 1 + Math.floor(M.deaths/5));
+  saveMeta();
+  S.phase='gameover'; S.finalScore=sc; S.endedByChoice=true;
+  render();
+}
+
+/* ---------------- 元商店 ---------------- */
+const SHOP_ITEMS = [
+  {id:'sword', n:'新角色 · 剑士', p:200, d:'解锁攻击向初始卡组。', has:()=>M.chars.includes('sword'), buy:()=>M.chars.push('sword')},
+  {id:'warlock', n:'新角色 · 术士', p:300, d:'解锁技能向初始卡组。', has:()=>M.chars.includes('warlock'), buy:()=>M.chars.push('warlock')},
+  {id:'perk', n:'新词条 ×1', p:150, d:'将一条扩展词条加入词条池（共鸣 / 虚无 / 永劫）。', has:()=>M.extraPerks.length>=3, buy:()=>{
+      const remain=['resonance','nothing','eternal'].filter(x=>!M.extraPerks.includes(x));
+      if(remain.length) M.extraPerks.push(remain[0]);
+  }},
+  {id:'event', n:'新事件 ×1', p:100, d:'将新事件加入事件池。', has:()=>M.extraEvents>=2, buy:()=>M.extraEvents++},
+  {id:'epoch', n:'新纪元', p:500, d:'直接解锁下一个纪元。', has:()=>M.epochs>=EPOCHS.length, buy:()=>M.epochs=Math.min(EPOCHS.length,M.epochs+1)},
+  {id:'map', n:'地图模板 ×1', p:400, d:'解锁新的地图生成形状（窄塔 / 蛛网）。', has:()=>M.maps.length>=3, buy:()=>{
+      const remain=['tower','web'].filter(x=>!M.maps.includes(x)); if(remain.length) M.maps.push(remain[0]);
+  }}
+];
+
+/* =========================================================
+   渲染
+   ========================================================= */
+function render(){
+  renderHUD();
+  const sc=$('screen');
+  const fn = {title:renderTitle,charselect:renderCharSelect,map:renderMap,battle:renderBattle,
+    reward:renderReward,event:renderEvent,shop:renderShop,altar:renderAltar,anomaly:renderAnomaly,
+    regionend:renderRegionEnd,transcend:renderTranscend,gameover:renderGameOver,
+    removecard:renderRemoveCard,blackmarket:renderBlackMarket,metashop:renderMetaShop,
+    deck:renderDeck,help:renderHelp}[S?S.phase:'title'];
+  sc.innerHTML='';
+  sc.scrollTop=0;
+  (fn||renderTitle)();
+}
+function renderHUD(){
+  const h=$('hud');
+  if(!S || S.hp===undefined){ h.innerHTML='<div class="spacer"></div><div class="meta">世界线 #'+M.worldLine+' · 回响点数 '+M.echoes+'</div>'; return; }
+  const pct=clamp(S.hp/S.maxHp*100,0,100);
+  const entPct=clamp(S.entropy/20*100,0,100);
+  h.innerHTML=
+   '<div class="hgroup g1">'+
+     '<div class="stat">熵 '+S.entropy+' <div class="entbar"><i style="width:'+entPct+'%"></i></div></div>'+
+     '<div class="stat">区域 '+S.region+'</div>'+
+     '<div class="stat">世界线 #'+S.worldLine+'</div>'+
+     '<div class="stat">纪元 '+S.epochName+'</div>'+
+   '</div>'+
+   '<div class="hgroup g2">'+
+     '<div class="stat">HP <div class="hpbar"><i style="width:'+pct+'%"></i><b>'+Math.max(0,S.hp)+' / '+S.maxHp+'</b></div></div>'+
+     '<div class="stat">金币 <b>'+S.gold+'</b></div>'+
+   '</div>'+
+   '<div class="hgroup g3">'+
+     '<div class="stat perks">'+S.perks.map(p=>'<span class="tag '+PERKS[p].k+'" title="'+esc(PERKS[p].d.replace(/<[^>]+>/g,''))+'">'+PERKS[p].n+'</span>').join(' ')+'</div>'+
+     '<button class="btn" onclick="showDeck()">牌组 '+S.deck.length+'</button>'+
+     '<button class="btn" onclick="showHelp()">规则</button>'+
+   '</div>';
+}
+function showDeck(){ S.phase='deck'; render(); }
+function showHelp(){ S.phase='help'; render(); }
+
+/* ---- 标题 ---- */
+function renderTitle(){
+  const s=$('screen');
+  s.innerHTML =
+   '<h1 class="title">无尽回响</h1>'+
+   '<div class="sub">ENDLESS ECHO · 熵只增不减</div>'+
+   '<div class="center dim">世界线 #'+M.worldLine+' · 回响点数 <b>'+M.echoes+'</b> · 已解锁纪元 '+M.epochs+'/'+EPOCHS.length+'</div>'+
+   (M.deaths?'<div class="center dim">历史最佳：回响 '+M.bestEcho+' / 熵 '+M.bestEntropy+'</div>':'')+
+   '<div class="bigrow"><button class="btn primary" onclick="goCharSelect()">开始新的一局</button>'+
+   '<button class="btn" onclick="goMeta()">元循环 · 解锁</button>'+
+   '<button class="btn" onclick="goHelp()">规则速查</button></div>'+
+   '<div class="rule"></div>'+
+   '<div class="center dim">单局 25–40 分钟 · 无限推进 · 死亡即进度</div>';
+}
+function goCharSelect(){ S={phase:'charselect'}; render(); }
+function goMeta(){ S={phase:'metashop'}; render(); }
+function goHelp(){ S={phase:'help',fromTitle:true}; render(); }
+
+/* ---- 选角色 ---- */
+function renderCharSelect(){
+  const s=$('screen');
+  s.innerHTML='<div class="banner">选择角色</div>'+
+   '<div class="center dim">纪元与世界线将在进入后抽取</div>'+
+   '<div class="rowgrid" style="margin-top:20px">'+
+   Object.keys(CHARS).filter(c=>M.chars.includes(c)).map(c=>
+    '<div class="perk gain" style="width:250px" onclick="newRun(\''+c+'\')">'+
+    '<div class="pn">'+CHARS[c].n+'</div><div class="pd">'+CHARS[c].d+'</div>'+
+    '<div class="pd dim">初始 10 张：'+deckSummary(CHARS[c].deck)+'</div></div>').join('')+
+   '</div>'+
+   '<div class="center" style="margin-top:18px"><button class="btn" onclick="S=null;render()">返回</button></div>';
+}
+function deckSummary(d){
+  const m={}; d.forEach(c=>m[CARDS[c].n]=(m[CARDS[c].n]||0)+1);
+  return Object.keys(m).map(k=>k+'×'+m[k]).join('、');
+}
+
+/* ---- 地图 ---- */
+const NODE_LABEL={battle:'战',elite:'精',event:'事',shop:'商',altar:'坛',anomaly:'异',boss:'王'};
+const NODE_NAME={battle:'战斗',elite:'精英',event:'事件',shop:'商店',altar:'祭坛',anomaly:'异常',boss:'Boss'};
+function renderMap(){
+  const s=$('screen'); const {L,layers}=S.map;
+  const flip = S.epoch===1; // 逆流纪元：Boss 在底层
+  const avail = availableNodes().map(p=>p.i+'-'+p.j);
+  let lines='';
+  const posOf=(i,j)=>{
+    const n=layers[i].length;
+    const y = (flip ? (L-1-i) : i);
+    return {x:(j+1)/(n+1)*100, y:(y+0.5)/L*100};
+  };
+  for(let i=0;i<L-1;i++){
+    layers[i].forEach(nd=>{
+      (nd.next||[]).forEach(t=>{
+        const a=posOf(i,nd.j), b=posOf(i+1,t);
+        const cur=S.visited.includes(S.layer+'-'+S.nodeIdx) && S.layer===i && S.nodeIdx===nd.j;
+        lines+='<line x1="'+a.x+'%" y1="'+a.y+'%" x2="'+b.x+'%" y2="'+b.y+'%" stroke="'+
+          (avail.includes((i+1)+'-'+t)?'#2b2620':'#c8bda6')+'" stroke-width="'+(avail.includes((i+1)+'-'+t)?2:1)+'" vector-effect="non-scaling-stroke"/>';
+      });
+    });
+  }
+  let nodes='';
+  for(let i=0;i<L;i++){
+    layers[i].forEach(nd=>{
+      const p=posOf(i,nd.j);
+      const key=i+'-'+nd.j;
+      let cls='node';
+      if(nd.gone) cls+=' gone';
+      else if(avail.includes(key)) cls+=' avail';
+      else if(S.visited.includes(key)) cls+=' done';
+      if(S.layer===i&&S.nodeIdx===nd.j) cls+=' cur';
+      if(nd.type==='boss') cls+=' boss';
+      const click = avail.includes(key)?' onclick="enterNode('+i+','+nd.j+')"':'';
+      nodes+='<div class="'+cls+'" style="left:'+p.x+'%;top:'+p.y+'%" '+click+' title="'+NODE_NAME[nd.type]+'">'+NODE_LABEL[nd.type]+'</div>';
+      if(i===0||i===L-1) nodes+='<div class="lab" style="left:'+p.x+'%;top:calc('+p.y+'% + 30px)">第 '+(flip?(L-i):(i+1))+' 层</div>';
+    });
+  }
+  s.innerHTML =
+   '<div class="kv"><span>区域 '+S.region+' · 层数 '+L+' · 形状 '+({standard:'标准',tower:'窄塔',web:'蛛网'}[S.map.shape])+'</span>'+
+   '<span>已通过节点 '+S.visited.length+'</span>'+
+   (S.bannedType?'<span class="warn">禁用：'+typeName(S.bannedType)+'</span>':'')+
+   (S.contradictions.length?'<span class="warn">规则矛盾：'+S.contradictions.map(c=>c==='blockNoClear'?'格挡不清零':'敌人先手').join('、')+'</span>':'')+'</div>'+
+   '<div id="mapwrap"><svg preserveAspectRatio="none">'+lines+'</svg>'+nodes+'</div>'+
+   '<div class="center dim" style="margin-top:8px">节点：战=战斗 精=精英 事=事件 商=商店 坛=祭坛 异=异常 王=Boss'+(flip?' · 逆流纪元：自上而下推进，Boss 在底层':'')+'</div>'+
+   '<div id="logbox"></div>';
+  fitMap();
+  renderLog();
+}
+// 地图容器按层数计算高度，层数多时可纵向滚动，避免节点重叠
+function fitMap(){
+  const w=document.getElementById('mapwrap');
+  if(!w||!S||!S.map) return;
+  const dense = isDense();
+  const per = dense?46:62, min = dense?330:560;
+  w.style.setProperty('--mapH', Math.max(min, S.map.L*per + 40)+'px');
+}
+
+/* ---- 战斗 ---- */
+function renderBattle(){
+  const s=$('screen');
+  const g=G;
+  const me='<div class="unit">'+
+    '<div class="un">'+S.charName+'（你）</div>'+
+    '<div class="hpbar" style="width:100%"><i style="width:'+clamp(S.hp/S.maxHp*100,0,100)+'%"></i><b>'+Math.max(0,S.hp)+' / '+S.maxHp+'</b></div>'+
+    '<div style="text-align:center;margin-top:6px">格挡 <span class="blk">'+g.block+'</span></div>'+
+    '<div class="buffs">'+(g.powers.str?'<span>力量 '+g.powers.str+'</span>':'')+(g.powers.dex?'<span>敏捷 '+g.powers.dex+'</span>':'')+
+      (hasPerk('heavy2')?'<span>出牌 '+g.played+'/3</span>':'')+'</div>'+
+    '</div>';
+  const en = g.enemies.map((e,i)=>
+    '<div class="unit target '+(g.target===i?'sel':'')+'" onclick="setTarget('+i+')">'+
+    '<div class="un">'+esc(e.name)+(e.hp<=0?'（倒下）':'')+'</div>'+
+    '<div class="hpbar" style="width:100%"><i style="width:'+clamp(e.hp/e.maxHp*100,0,100)+'%"></i><b>'+Math.max(0,e.hp)+' / '+e.maxHp+'</b></div>'+
+    '<div class="intent">'+intentText(e)+'</div>'+
+    '<div class="buffs">'+(e.block?'<span>格挡 '+e.block+'</span>':'')+(e.vuln?'<span>易伤 '+e.vuln+'</span>':'')+
+      (e.burn?'<span>燃烧 '+e.burn+'</span>':'')+(e.str?'<span>力量 '+e.str+'</span>':'')+
+      (e.perks.length?'<span>'+e.perks.join('/')+'</span>':'')+(e.mimic?'<span>拟态:'+CARDS[e.mimic].n+'</span>':'')+'</div>'+
+    '</div>').join('');
+  const hand = g.hand.map((id,i)=>{
+    const C=CARDS[id];
+    let cost=C.c;
+    if(g.played===0 && hasPerk('swift')) cost=0;
+    if(g.freeCards.has(i)) cost=0;
+    const banned = S.bannedType===C.t;
+    const no = g.energy<cost || banned || (hasPerk('heavy2')&&g.played>=3);
+    return '<div class="card '+C.t+' '+(C.r==='rare'?'rare':'')+(no?' no':'')+'" onclick="playCard('+i+')">'+
+      '<div class="cost">'+cost+'</div><div class="cname">'+C.n+'</div>'+
+      '<div class="ctype">'+typeName(C.t)+' · '+(C.r==='rare'?'稀有':C.r==='uncommon'?'精良':'普通')+'</div>'+
+      '<div class="cdesc">'+C.d+'</div></div>';
+  }).join('');
+  s.innerHTML =
+   '<div class="kv"><span>第 '+g.turn+' 回合</span><span>抽牌堆 '+g.drawP.length+'</span><span>弃牌堆 '+g.disc.length+'</span>'+
+   (S.bannedType?'<span class="warn">禁用 '+typeName(S.bannedType)+'</span>':'')+'</div>'+
+   '<div id="btl">'+
+     '<div class="arena"><div class="side">'+me+'</div><div class="side">'+en+'</div></div>'+
+     '<div class="hand">'+hand+'</div>'+
+     '<div class="bbar"><div class="energy">'+g.energy+' / '+g.maxEnergy+'</div>'+
+       '<button class="btn primary" onclick="endTurn()">结束回合</button>'+
+       '<span class="dim">'+(isDense()?'点击敌人选择目标 · 手牌左右滑动出牌':'点击敌人选择目标 · 点击手牌出牌')+
+         (hasPerk('swift')&&g.played===0?' · 迅捷：本场首张牌免费':'')+'</span></div>'+
+     '<div id="logbox"></div>'+
+   '</div>';
+  renderLog();
+}
+function setTarget(i){ if(G.enemies[i].hp>0) G.target=i; render(); }
+
+/* ---- 奖励 ---- */
+function renderReward(){
+  const s=$('screen'); const r=S.reward;
+  const cards=r.cards.map((id,i)=>{
+    const C=CARDS[id];
+    return '<div class="card '+C.t+' '+(C.r==='rare'?'rare':'')+' pick" onclick="takeCard(\''+id+'\')">'+
+      '<div class="cost">'+C.c+'</div><div class="cname">'+C.n+'</div>'+
+      '<div class="ctype">'+typeName(C.t)+'</div><div class="cdesc">'+C.d+'</div></div>';
+  }).join('');
+  s.innerHTML='<div class="banner">战斗胜利</div>'+
+   '<div class="center dim">'+({normal:'普通战斗',elite:'精英战斗 · 必掉遗物',boss:'Boss 战',final:'终局 Boss'}[r.type])+' — 选择 1 张卡加入牌组（可跳过）</div>'+
+   '<div class="rowgrid" style="margin-top:20px">'+cards+'</div>'+
+   '<div class="center" style="margin-top:16px"><button class="btn" onclick="skipCard()">跳过</button></div>'+
+   '<div id="logbox"></div>';
+  renderLog();
+}
+function takeCard(id){ S.deck.push(id); log('获得卡牌「'+CARDS[id].n+'」。'); afterReward(); }
+function skipCard(){ afterReward(); }
+function afterReward(){
+  const t=S.reward.type;
+  if(t==='final'){ S.phase='transcend'; render(); return; }
+  if(t==='boss'){ regionClear(); return; }
+  S.phase='map'; render();
+}
+
+/* ---- 事件 ---- */
+function renderEvent(){
+  const s=$('screen'); const ev=S.event;
+  s.innerHTML='<div class="banner">事件</div>'+
+   '<div class="panel" style="max-width:720px;margin:0 auto"><div style="font-size:17px">'+ev.t+'</div><div class="rule"></div>'+
+   (S.eventDone? '<div class="center" style="font-size:15px">'+esc(S.eventResult)+'</div><div class="center" style="margin-top:14px"><button class="btn primary" onclick="S.phase=\'map\';render()">继续</button></div>'
+   : ev.o.map((o,i)=>'<div class="perk gain" style="width:100%;margin-bottom:10px" onclick="chooseEvent('+i+')"><div class="pd" style="font-size:15px;color:var(--ink)">'+esc(o.x)+'</div></div>').join(''))+
+   '</div><div id="logbox"></div>';
+  renderLog();
+}
+
+/* ---- 异常 ---- */
+function renderAnomaly(){
+  const s=$('screen'); const a=S.anomaly;
+  const txt={
+    mirror:['镜像房','对战自己的复制体（复制你的卡组），强度等同精英。'],
+    collapse:['崩塌房','通过后，本区域随机 2 个节点消失。'],
+    prolif:['增殖房','本区域剩余节点全部变为战斗。']
+  }[a];
+  s.innerHTML='<div class="banner">异常节点</div>'+
+   '<div class="panel" style="max-width:640px;margin:0 auto;text-align:center">'+
+   '<div style="font-size:20px">'+txt[0]+'</div><div class="dim" style="margin:10px 0">'+txt[1]+'</div>'+
+   '<button class="btn primary" onclick="resolveAnomaly()">进入</button></div>'+
+   '<div id="logbox"></div>';
+  renderLog();
+}
+
+/* ---- 商店 ---- */
+function renderShop(){
+  const s=$('screen'); const sh=S.shop;
+  const cards=sh.cards.map((id,i)=>{
+    const C=CARDS[id]; const p=price(CARD_PRICE[C.r]);
+    return '<div class="shopitem"><div class="card '+C.t+' '+(C.r==='rare'?'rare':'')+'" style="width:100%;min-height:150px">'+
+      '<div class="cost">'+C.c+'</div><div class="cname">'+C.n+'</div><div class="ctype">'+typeName(C.t)+'</div><div class="cdesc">'+C.d+'</div></div>'+
+      '<button class="btn" onclick="buyCard(\''+id+'\','+i+')">购入 · '+p+' 金币</button></div>';
+  }).join('');
+  const relic = sh.relic ? (()=>{const R=RELICS[sh.relic];const p=price(R.p);
+    return '<div class="shopitem"><div style="font-size:16px;font-weight:700">遗物 · '+R.n+'</div><div class="dim">'+R.d+'</div>'+
+      '<button class="btn" onclick="buyRelic()">购入 · '+p+' 金币</button></div>';})() : '<div class="shopitem dim">遗物已售罄</div>';
+  const removeItem='<div class="shopitem">'+
+   '<div style="font-size:16px;font-weight:700">删卡服务</div>'+
+   '<div class="dim">从牌组中移除 1 张卡，永久精简牌组。</div>'+
+   '<div class="dim">本商店限 1 次。</div>'+
+   '<button class="btn" '+(sh.removeUsed?'disabled':'')+' onclick="removeCard()">'+(sh.removeUsed?'已使用':'移除 · '+sh.removePrice+' 金币')+'</button></div>';
+  const blackItem = S.entropy>=18
+   ? '<div class="shopitem"><div style="font-size:16px;font-weight:700">黑市</div>'+
+     '<div class="dim">以 HP 换取稀有卡 / 遗物 / 续命。</div><div class="dim">熵 '+S.entropy+' · 已解锁。</div>'+
+     '<button class="btn" onclick="blackMarket()">进入黑市</button></div>'
+   : '<div class="shopitem" style="opacity:.55"><div style="font-size:16px;font-weight:700">黑市 · 未解锁</div>'+
+     '<div class="dim">熵 ≥ 18 时解锁：用 HP 换稀有物。</div><div class="dim">当前熵 '+S.entropy+'。</div>'+
+     '<button class="btn" disabled>未解锁</button></div>';
+  s.innerHTML='<div class="banner">商店</div>'+
+   '<div class="center dim">价格 = 基础价 × (1 + 熵 × 0.1)'+(hasPerk('greed')?' · 贪婪：×2':'')+' · 持有 '+S.gold+' 金币</div>'+
+   '<div class="shopgrid" style="margin-top:16px">'+cards+relic+'</div>'+
+   '<div class="shopservices">'+removeItem+blackItem+'</div>'+
+   '<div class="center" style="margin-top:20px"><button class="btn primary" onclick="S.phase=\'map\';render()">离开商店</button></div>'+
+   '<div id="logbox" style="margin-top:14px"></div>';
+  renderLog();
+}
+function renderBlackMarket(){
+  const s=$('screen');
+  s.innerHTML='<div class="banner">黑 市</div>'+
+   '<div class="center dim">以血换物。当前 HP '+S.hp+'/'+S.maxHp+'</div>'+
+   '<div class="rowgrid" style="margin-top:20px">'+
+   '<div class="shopitem"><div style="font-weight:700">稀有卡</div><div class="dim">失去 12 HP，随机获得 1 张稀有卡。</div><button class="btn" onclick="bmDeal(\'card\')">接受</button></div>'+
+   '<div class="shopitem"><div style="font-weight:700">遗物</div><div class="dim">失去 22 HP，随机获得 1 个遗物。</div><button class="btn" onclick="bmDeal(\'relic\')">接受</button></div>'+
+   '<div class="shopitem"><div style="font-weight:700">续命</div><div class="dim">倾尽所有金币，回复 25% 最大 HP。</div><button class="btn" onclick="bmDeal(\'hp\')">接受</button></div>'+
+   '</div><div class="center" style="margin-top:16px"><button class="btn" onclick="S.phase=\'shop\';render()">返回</button></div>'+
+   '<div id="logbox"></div>';
+  renderLog();
+}
+function renderRemoveCard(){
+  const s=$('screen');
+  const m={}; S.deck.forEach(id=>m[id]=(m[id]||0)+1);
+  s.innerHTML='<div class="banner">选择要移除的卡</div>'+
+   '<div class="grid">'+Object.keys(m).map(id=>{
+     const C=CARDS[id];
+     return '<div class="card '+C.t+' pick" onclick="removeCardId(\''+id+'\')"><div class="cost">'+C.c+'</div>'+
+       '<div class="cname">'+C.n+' ×'+m[id]+'</div><div class="ctype">'+typeName(C.t)+'</div><div class="cdesc">'+C.d+'</div></div>';
+   }).join('')+'</div>'+
+   '<div class="center" style="margin-top:16px"><button class="btn" onclick="S.phase=\'shop\';render()">取消</button></div>';
+}
+function removeCardId(id){
+  const p=S.shop.removePrice;
+  if(S.gold<p) return;
+  const i=S.deck.indexOf(id); if(i<0) return;
+  S.gold-=p; S.deck.splice(i,1); S.shop.removeUsed=true;
+  log('移除「'+CARDS[id].n+'」（-'+p+' 金币）。');
+  S.phase='shop'; render();
+}
+
+/* ---- 祭坛 ---- */
+function renderAltar(){
+  const s=$('screen'); const a=S.altar;
+  const gp=PERKS[a.gain], cp=a.cost?PERKS[a.cost]:null;
+  s.innerHTML='<div class="banner">祭 坛</div>'+
+   '<div class="center dim">明码标价：以一条'+(a.strong?'混乱':'代价')+'词条，换一条增益词条。</div>'+
+   '<div class="rowgrid" style="margin-top:20px">'+
+   '<div class="perk gain" style="cursor:default"><div class="pn">获得 · '+gp.n+'</div><div class="pd">'+gp.d+'</div></div>'+
+   (cp? '<div class="perk '+(a.strong?'chaos':'cost')+'" style="cursor:default"><div class="pn">代价 · '+cp.n+(a.strong?'（混乱）':'')+'</div><div class="pd">'+cp.d+'</div></div>'
+      : '<div class="perk cost" style="cursor:default"><div class="pn">代价 · 无</div><div class="pd">你已无词条可作为代价。</div></div>')+
+   (a.strong?'<div class="perk gain" style="cursor:default"><div class="pn">额外 · 强力增益</div><div class="pd">混乱交易追加 1 条增益词条。</div></div>':'')+
+   '</div>'+
+   '<div class="center" style="margin-top:18px">'+
+   (a.done?'<button class="btn primary" onclick="S.phase=\'map\';render()">继续</button>':
+    '<button class="btn primary" onclick="acceptAltar()">接受交易</button> <button class="btn" onclick="S.phase=\'map\';render()">拒绝</button>')+
+   '</div><div id="logbox"></div>';
+  renderLog();
+}
+
+/* ---- 区域结算 ---- */
+function renderRegionEnd(){
+  const s=$('screen');
+  if(!S.perkOffer || !S.perkOffer.length){
+    s.innerHTML='<div class="banner">区域 '+S.region+' 结算</div>'+
+     '<div class="center dim">熵 '+S.entropy+' → '+(S.entropy+(S.epoch===7?2:1))+' · 所有词条均已获得，本区域无词条可选</div>'+
+     '<div class="center" style="margin-top:18px"><button class="btn primary" onclick="chooseRegionPerk(null)">继续</button></div>'+
+     '<div id="logbox"></div>';
+    renderLog(); return;
+  }
+  const list=S.perkOffer.map(id=>{
+    const p=PERKS[id];
+    return '<div class="perk '+p.k+'" onclick="chooseRegionPerk(\''+id+'\')"><div class="pn">'+p.n+'</div><div class="pd">'+p.d+'</div>'+
+      '<div class="pd dim">'+(p.k==='gain'?'增益':p.k==='cost'?'代价':'混乱')+'</div></div>';
+  }).join('');
+  s.innerHTML='<div class="banner">区域 '+S.region+' 结算</div>'+
+   '<div class="center dim">熵 '+S.entropy+' → '+(S.entropy+(S.epoch===7?2:1))+' · 选择 1 条词条</div>'+
+   '<div class="rowgrid" style="margin-top:20px">'+list+'</div>'+
+   '<div id="logbox"></div>';
+  renderLog();
+}
+
+/* ---- 超越 ---- */
+function renderTranscend(){
+  const s=$('screen');
+  s.innerHTML='<div class="banner">终局 Boss 已被击倒</div>'+
+   '<div class="center dim">熵 '+S.entropy+' · 回响点数（若结束）：'+score()+'</div>'+
+   '<div class="bigrow">'+
+   '<button class="btn primary" onclick="endRun()">选择结束 · 本局结算</button>'+
+   '<button class="btn" onclick="transcend()">选择超越 · 熵 +1，继续推进</button></div>'+
+   '<div class="center dim" style="margin-top:14px">超越模式：每 +1 熵，所有敌人属性 +10%，词条池全开。</div>'+
+   '<div id="logbox"></div>';
+  renderLog();
+}
+
+/* ---- 结算 ---- */
+function renderGameOver(){
+  const s=$('screen');
+  s.innerHTML='<div class="banner">'+(S.endedByChoice?'本局结束':'回响中断')+'</div>'+
+   '<div class="center dim">世界线 #'+S.worldLine+' 在此终结。'+(S.endedByChoice?'':'你倒下了。')+'</div>'+
+   '<div class="panel" style="max-width:520px;margin:16px auto">'+
+   '<table class="sheet">'+
+   '<tr><th>结算项</th><th>数值</th></tr>'+
+   '<tr><td>区域数 × 30</td><td>'+S.region+' → '+(S.region*30)+'</td></tr>'+
+   '<tr><td>熵值 × 10</td><td>'+S.entropy+' → '+(S.entropy*10)+'</td></tr>'+
+   '<tr><td>精英击杀 × 15</td><td>'+S.kills.elite+' → '+(S.kills.elite*15)+'</td></tr>'+
+   '<tr><td>Boss 击杀 × 50</td><td>'+S.kills.boss+' → '+(S.kills.boss*50)+'</td></tr>'+
+   '<tr><td>剩余 HP / 2</td><td>'+Math.max(0,S.hp)+' → '+Math.floor(Math.max(0,S.hp)/2)+'</td></tr>'+
+   '<tr><th>回响点数合计</th><th>'+S.finalScore+'</th></tr>'+
+   '</table></div>'+
+   '<div class="center dim">持有词条：'+S.perks.map(p=>PERKS[p].n).join('、')+'</div>'+
+   '<div class="center dim">遗物：'+(S.relics.length?S.relics.map(r=>RELICS[r].n).join('、'):'无')+'</div>'+
+   '<div class="bigrow"><button class="btn primary" onclick="S=null;render()">返回标题</button>'+
+   '<button class="btn" onclick="goMeta()">元循环 · 解锁</button></div>';
+}
+
+/* ---- 元商店 ---- */
+function renderMetaShop(){
+  const s=$('screen');
+  const items=SHOP_ITEMS.map(it=>{
+    const owned=it.has();
+    return '<div class="shopitem" style="width:230px">'+
+     '<div style="font-size:16px;font-weight:700">'+it.n+'</div>'+
+     '<div class="dim">'+it.d+'</div>'+
+     '<button class="btn" '+(owned||M.echoes<it.p?'disabled':'')+' onclick="buyMeta(\''+it.id+'\')">'+
+     (owned?'已解锁':'解锁 · '+it.p+' 回响')+'</button></div>';
+  }).join('');
+  s.innerHTML='<div class="banner">元循环 · 解锁</div>'+
+   '<div class="center dim">回响点数：<b>'+M.echoes+'</b> · 解锁只扩展规则空间，不提升起始数值。</div>'+
+   '<div class="grid" style="margin-top:14px">'+items+'</div>'+
+   '<div class="rule"></div>'+
+   '<div class="center dim">已解锁纪元：'+EPOCHS.slice(0,M.epochs).map((e,i)=>(i+1)+' '+e.n).join(' · ')+'</div>'+
+   '<div class="center dim">已解锁角色：'+M.chars.map(c=>CHARS[c].n).join(' · ')+' · 地图模板：'+M.maps.map(m=>({standard:'标准',tower:'窄塔',web:'蛛网'}[m])).join(' · ')+'</div>'+
+   '<div class="center" style="margin-top:18px"><button class="btn primary" onclick="S=null;render()">返回</button></div>';
+}
+function buyMeta(id){
+  const it=SHOP_ITEMS.find(x=>x.id===id);
+  if(!it||it.has()||M.echoes<it.p) return;
+  M.echoes-=it.p; it.buy(); saveMeta(); render();
+}
+
+/* ---- 牌组 / 规则 ---- */
+function renderDeck(){
+  const s=$('screen'); const m={}; S.deck.forEach(id=>m[id]=(m[id]||0)+1);
+  s.innerHTML='<div class="banner">牌组（'+S.deck.length+'）</div>'+
+   '<div class="grid">'+Object.keys(m).map(id=>{const C=CARDS[id];
+    return '<div class="card '+C.t+' '+(C.r==='rare'?'rare':'')+'"><div class="cost">'+C.c+'</div>'+
+    '<div class="cname">'+C.n+' ×'+m[id]+'</div><div class="ctype">'+typeName(C.t)+'</div><div class="cdesc">'+C.d+'</div></div>';
+   }).join('')+'</div>'+
+   '<div class="rule"></div><div class="banner" style="font-size:18px">遗物</div>'+
+   '<div class="center dim">'+(S.relics.length?S.relics.map(r=>'<b>'+RELICS[r].n+'</b>：'+RELICS[r].d).join('<br>'):'暂无')+'</div>'+
+   '<div class="center" style="margin-top:18px"><button class="btn primary" onclick="backFromDeck()">返回</button></div>';
+}
+function backFromDeck(){ S.phase = G && !G.over ? 'battle' : 'map'; render(); }
+function renderHelp(){
+  const s=$('screen');
+  s.innerHTML='<div class="banner">规则速查</div>'+
+   '<div class="panel" style="max-width:860px;margin:0 auto">'+
+   '<table class="sheet">'+
+   '<tr><th>参数</th><th>初始</th><th>说明</th></tr>'+
+   '<tr><td>玩家 HP</td><td>60</td><td>软上限 150，超出后提升减半</td></tr>'+
+   '<tr><td>每回合能量</td><td>3</td><td>回满制，不累积（余烬可保留 1 点）</td></tr>'+
+   '<tr><td>每回合抽牌</td><td>5</td><td>回合结束弃手牌（逆流除外）</td></tr>'+
+   '<tr><td>初始卡组</td><td>10 张</td><td>5 打击 + 4 防御 + 1 终结</td></tr>'+
+   '<tr><td>熵 Entropy</td><td>0</td><td>每区 +1，只增不减，核心时钟</td></tr>'+
+   '</table>'+
+   '<div class="rule"></div>'+
+   '<div><b>敌人缩放</b>：S = 1 + 0.15 × (区域 − 1) + 0.05 × 熵；普通 25/9，精英 70/16，Boss 140/22。</div>'+
+   '<div><b>地图</b>：层数 L = 8 + ⌊熵/5⌋ × 2；第 1 层 2 节点，末层 Boss；连边索引差 ≤ 1。</div>'+
+   '<div><b>节点</b>：战斗 / 精英（必掉遗物，金币 ×2）/ 事件 / 商店 / 祭坛 / 异常（熵 ≥ 5）/ Boss。</div>'+
+   '<div><b>熵阈值</b>：5 异常节点 · 8 精英词条 · 12 意图隐藏 · 15 Boss 强化 · 18 黑市 · 20 终局 Boss · 25 规则矛盾 · 30 每区删卡。</div>'+
+   '<div><b>结算</b>：回响 = 区域 ×30 + 熵 ×10 + 精英 ×15 + Boss ×50 + ⌊剩余 HP/2⌋。</div>'+
+   '</div>'+
+   '<div class="center" style="margin-top:18px"><button class="btn primary" onclick="'+(S && S.fromTitle?'S=null;':'backFromDeck();')+'render()">返回</button></div>';
+}
+
+/* ---------------- 启动 ---------------- */
+window.addEventListener('resize', ()=>{ if(S && S.phase==='map') fitMap(); });
+window.addEventListener('orientationchange', ()=>{ setTimeout(()=>{ if(S && S.phase==='map') fitMap(); },300); });
+render();
+</script>
+</body>
+</html>
