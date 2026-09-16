@@ -302,38 +302,42 @@
                         <i class="fas fa-envelope text-3xl text-blue-600"></i>
                         <div>
                             <p class="text-sm text-zinc-400">邮箱</p>
-                            <a href="mailto:your@email.com" class="text-xl font-medium">your@email.com</a>
+                            <a href="mailto:1932046086@qq.com" class="text-xl font-medium">1932046086@qq.com</a>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
-                        <i class="fab fa-weixin text-3xl text-green-600"></i>
+                        <i class="fab fa-qq text-3xl text-blue-500"></i>
                         <div>
-                            <p class="text-sm text-zinc-400">微信</p>
-                            <p class="text-xl font-medium">your_wechat_id</p>
+                            <p class="text-sm text-zinc-400">QQ</p>
+                            <p class="text-xl font-medium">1932046086</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <i class="fab fa-twitter text-3xl text-blue-400"></i>
                         <div>
                             <p class="text-sm text-zinc-400">Twitter / X</p>
-                            <a href="#" class="text-xl font-medium">@yourhandle</a>
+                            <a href="#" class="text-xl font-medium">这是不被允许的</a>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="bg-zinc-100 rounded-3xl p-8 flex flex-col justify-center">
-                <form class="space-y-6">
-                    <input type="text" placeholder="你的名字"
+                <form id="contact-form" class="space-y-6">
+                    <input type="text" id="contact-name" placeholder="你的名字" required
                         class="w-full px-6 py-5 rounded-3xl bg-white border focus:outline-none focus:border-blue-600">
-                    <input type="email" placeholder="你的邮箱"
+                    <input type="email" id="contact-email" placeholder="你的邮箱" required
                         class="w-full px-6 py-5 rounded-3xl bg-white border focus:outline-none focus:border-blue-600">
-                    <textarea placeholder="想聊什么？" rows="4"
+                    <textarea id="contact-message" placeholder="想聊什么？" rows="4" required
                         class="w-full px-6 py-5 rounded-3xl bg-white border focus:outline-none focus:border-blue-600"></textarea>
-                    <button type="submit"
-                        class="w-full py-6 bg-blue-600 text-white font-medium text-lg rounded-3xl hover:bg-blue-700 transition">
-                        发送消息
+                    <button type="submit" id="submit-btn"
+                        class="w-full py-6 bg-blue-600 text-white font-medium text-lg rounded-3xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btn-text">发送消息</span>
+                        <span id="btn-loading" class="hidden">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>发送中...
+                        </span>
                     </button>
+                    <div id="form-status" class="hidden text-center text-sm font-medium"></div>
                 </form>
             </div>
         </div>
