@@ -1228,8 +1228,13 @@ function renderHUD(){
      '<button class="btn" onclick="showHelp()">规则</button>'+
    '</div>';
 }
-function showDeck(){ S.phase='deck'; render(); }
-function showHelp(){ S.phase='help'; render(); }
+function showDeck(){ openOverlay('deck'); }
+function showHelp(){ openOverlay('help'); }
+// 打开牌组 / 规则前记下来源界面，返回时还原（deck 与 help 互跳不覆盖来源）
+function openOverlay(p){
+  if(S.phase!=='deck' && S.phase!=='help') S.back = S.phase;
+  S.phase = p; render();
+}
 
 /* ---- 标题 ---- */
 function renderTitle(){
@@ -1602,7 +1607,12 @@ function renderDeck(){
    '<div class="center dim">'+(S.relics.length?S.relics.map(r=>'<b>'+RELICS[r].n+'</b>：'+RELICS[r].d).join('<br>'):'暂无')+'</div>'+
    '<div class="center" style="margin-top:18px"><button class="btn primary" onclick="backFromDeck()">返回</button></div>';
 }
-function backFromDeck(){ S.phase = G && !G.over ? 'battle' : 'map'; render(); }
+function backFromDeck(){
+  const back = S.back; S.back = null;
+  // 优先还原来源界面（奖励 / 商店 / 事件 / 祭坛 / 区域结算 / 结算 …），否则退回旧行为
+  S.phase = back || (G && !G.over ? 'battle' : 'map');
+  render();
+}
 function renderHelp(){
   const s=$('screen');
   s.innerHTML='<div class="banner">规则速查</div>'+

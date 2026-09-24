@@ -1,66 +1,61 @@
-function initializeTailwind() {
-    tailwind.config = {
-        content: [],
-        theme: {
-            extend: {}
-        }
-    }
-}
+/* index.js — 首页交互（已移除 Tailwind，样式全部由 Styles/index.css 提供） */
 
 // 移动端菜单
-function toggleMobileMenu() {
-    const menu = document.getElementById('mobile-menu')
-    const icon = document.getElementById('menu-icon')
-    menu.classList.toggle('hidden')
-    if (menu.classList.contains('hidden')) {
-        icon.classList.replace('fa-times', 'fa-bars')
-    } else {
-        icon.classList.replace('fa-bars', 'fa-times')
-    }
-}
+function setupMobileMenu() {
+    const toggle = document.getElementById('menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    const icon = document.getElementById('menu-icon');
+    if (!toggle || !menu || !icon) return;
 
-// 深色模式切换（未实现）
-function toggleDarkMode() {
-    const html = document.documentElement
-    if (html.classList.contains('dark')) {
-        html.classList.remove('dark')
-        localStorage.theme = 'light'
-    } else {
-        html.classList.add('dark')
-        localStorage.theme = 'dark'
-    }
-    // 实际项目中可扩展更多样式
-    alert('深色模式切换（示例）\n实际项目中可完整实现深色主题～')
+    const setOpen = (open) => {
+        menu.classList.toggle('is-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? '收起导航菜单' : '展开导航菜单');
+        icon.classList.toggle('fa-times', open);
+        icon.classList.toggle('fa-bars', !open);
+    };
+
+    toggle.addEventListener('click', () => {
+        setOpen(!menu.classList.contains('is-open'));
+    });
+
+    // 点击菜单项后自动收起
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setOpen(false)));
+
+    // 视口放大到桌面尺寸时重置状态
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) setOpen(false);
+    });
 }
 
 // 联系表单提交
-async function handleContactForm() {
-    const form = document.getElementById('contact-form')
-    const submitBtn = document.getElementById('submit-btn')
-    const btnText = document.getElementById('btn-text')
-    const btnLoading = document.getElementById('btn-loading')
-    const formStatus = document.getElementById('form-status')
+function handleContactForm() {
+    const form = document.getElementById('contact-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnLoading = document.getElementById('btn-loading');
+    const formStatus = document.getElementById('form-status');
 
-    if (!form) return
+    if (!form) return;
 
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault()
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-        const name = document.getElementById('contact-name').value.trim()
-        const email = document.getElementById('contact-email').value.trim()
-        const message = document.getElementById('contact-message').value.trim()
+        const name = document.getElementById('contact-name').value.trim();
+        const email = document.getElementById('contact-email').value.trim();
+        const message = document.getElementById('contact-message').value.trim();
 
         if (!name || !email || !message) {
-            showStatus('请填写所有字段', 'error')
-            return
+            showStatus('请填写所有字段', 'error');
+            return;
         }
 
-        setLoading(true)
+        setLoading(true);
 
         try {
-            const inboxId = '4709d769-c35a-4bf8-b136-5d0c3dfeaed3'
-            const apiKey = 'ask_CZ6pnyewMuPf8bDUAThCJN1fKjc2TTdCKLOxLYdo'
-            const recipientEmail = '1932046086@qq.com'
+            const inboxId = '4709d769-c35a-4bf8-b136-5d0c3dfeaed3';
+            const apiKey = 'ask_CZ6pnyewMuPf8bDUAThCJN1fKjc2TTdCKLOxLYdo';
+            const recipientEmail = '1932046086@qq.com';
 
             const res = await fetch(
                 `https://api.agentsend.io/inboxes/${inboxId}/messages`,
@@ -77,57 +72,41 @@ async function handleContactForm() {
                         bodyHtml: `<p><strong>姓名：</strong>${name}</p><p><strong>邮箱：</strong>${email}</p><p><strong>留言内容：</strong></p><p>${message.replace(/\n/g, '<br>')}</p>`,
                     }),
                 }
-            )
-            console.log('Response status:', inboxId)
+            );
 
-            const result = await res.json()
+            const result = await res.json();
 
             if (res.ok) {
-                showStatus('消息发送成功！我会尽快回复你', 'success')
-                form.reset()
-                console.log('Message ID:', result.id)
-                console.log('Delivery:', result.delivery)
-                console.log('Status:', result.status)
+                showStatus('消息发送成功！我会尽快回复你', 'success');
+                form.reset();
             } else {
-                throw new Error(result.message || '发送失败')
+                throw new Error(result.message || '发送失败');
             }
         } catch (error) {
-            console.error('发送失败:', error)
-            showStatus('发送失败，请稍后重试或直接邮件联系我', 'error')
+            console.error('发送失败:', error);
+            showStatus('发送失败，请稍后重试或直接邮件联系我', 'error');
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    })
+    });
 
     function setLoading(loading) {
-        submitBtn.disabled = loading
-        if (loading) {
-            btnText.classList.add('hidden')
-            btnLoading.classList.remove('hidden')
-        } else {
-            btnText.classList.remove('hidden')
-            btnLoading.classList.add('hidden')
-        }
+        submitBtn.disabled = loading;
+        btnText.classList.toggle('hidden', loading);
+        btnLoading.classList.toggle('hidden', !loading);
     }
 
     function showStatus(message, type) {
-        formStatus.textContent = message
-        formStatus.classList.remove('hidden', 'text-green-600', 'text-red-600')
-        
-        if (type === 'success') {
-            formStatus.classList.add('text-green-600')
-        } else {
-            formStatus.classList.add('text-red-600')
-        }
+        formStatus.textContent = message;
+        formStatus.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        formStatus.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
 
-        setTimeout(() => {
-            formStatus.classList.add('hidden')
-        }, 5000)
+        clearTimeout(showStatus._t);
+        showStatus._t = setTimeout(() => formStatus.classList.add('hidden'), 5000);
     }
 }
 
-// 页面加载完成
-window.onload = function () {
-    initializeTailwind()
-    handleContactForm()
-}
+document.addEventListener('DOMContentLoaded', function () {
+    setupMobileMenu();
+    handleContactForm();
+});
