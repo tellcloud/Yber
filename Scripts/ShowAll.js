@@ -1,68 +1,16 @@
 // 资源数据
 const resources = [
-    {
-        type: 'game',
-        img: '🐍',
-        title: '贪吃蛇Demo',
-        descs: ['思考手机端怎么比PC端分数高'],
-        link: 'Snake.html'
-    },
-    {
-        type: 'game',
-        img: '🈚',
-        title: '竞技对战游戏',
-        descs: ['多人在线实时对战，支持自定义角色与技能', '实现要搭服务器，没有做预算，先简单上个肉鸽Demo'],
-        link: 'rogue_field.html'
-    },
-    {
-        type: 'game',
-        img: '<img src="../src/img/Endless_Echo.png" width="200px" height="150px">',
-        title: '无尽回响',
-        descs: ['一个类似于Slay the Spire的游戏', '人家三层我无限循环，能玩一整天。'],
-        link: 'Endless_Echo.html'
-    },
-    {
-        type: 'blog',
-        img: '<img src="../src/img/2049_10000future.jpg" width="200px" height="150px">',
-        title: '2049未来10000天的可能-凯文·凯利',
-        descs: ['通过五大核心概念和十大发展领域构建未来社会图景'],
-        link: '../src/text/2049未来10000天的可能-凯文·凯利.pdf'
-    },
-    {
-        type: 'blog',
-        img: '<i class="fas fa-play-circle"></i>',
-        title: '宣传短片',
-        descs: ['产品宣传展示视频，1080P高清画质'],
-        link: null
-    },
-    {
-        type: 'other',
-        img: '<svg xmlns="http://www.w3.org/2000/svg" width="138" height="20" role="img" aria-label="Data Science: AKShare"><title>Data Science: AKShare</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="138" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="81" height="20" fill="#555"/><rect x="81" width="57" height="20" fill="#97ca00"/><rect width="138" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="415" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="710">Data Science</text><text x="415" y="140" transform="scale(.1)" fill="#fff" textLength="710">Data Science</text><text aria-hidden="true" x="1085" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="470">AKShare</text><text x="1085" y="140" transform="scale(.1)" fill="#fff" textLength="470">AKShare</text></g></svg>',
-        title: 'AKShare财经数据API',
-        descs: ['一款免费开源的量化投研数据获取工具'],
-        link: 'https://gitcode.com/gh_mirrors/aks/akshare'
-    },
-    {
-        type: 'other',
-        img: '📖',
-        title: 'TXT文本阅读器',
-        descs: ['用印申请表伪装的TXT文本阅读器'],
-        link: 'TxTplayer.html'
-    },
-    {
-        type: 'other',
-        img: '<img src="../src/img/FundDetail.jpg" width="200px" height="150px">',
-        title: '基金数据看板',
-        descs: ['实时展示基金数据与图表'],
-        link: 'FundDetail.html'
-    },
-    {
-        type: 'other',
-        img: '📅',
-        title: 'Excel盯盘看板',
-        descs: ['伪装成表格的盯盘工具'],
-        link: 'excel.html'
-    }
+    { type: 'game', img: '🐍', title: '贪吃蛇Demo', descs: ['思考手机端怎么比PC端分数高'], link: './Snake.html' },
+    { type: 'game', img: '🈚', title: '竞技对战游戏', descs: ['多人在线实时对战，支持自定义角色与技能', '实现要搭服务器，没有做预算，先简单上个肉鸽Demo'], link: './rogue_field.html' },
+    { type: 'game', img: '<img src="../src/img/Endless_Echo.png" width="200px" height="150px">', title: '无尽回响', descs: ['一个类似于Slay the Spire的游戏', '人家三层我无限循环，能玩一整天。'], link: './Endless_Echo.html' },
+    
+    { type: 'media', img: '<img src="../src/img/2049_10000future.jpg" width="200px" height="150px">', title: '2049未来10000天的可能-凯文·凯利', descs: ['通过五大核心概念和十大发展领域构建未来社会图景'], link: '../src/text/2049未来10000天的可能-凯文·凯利.pdf' },
+    { type: 'media', img: '<i class="fas fa-play-circle"></i>', title: '宣传短片', descs: ['产品宣传展示视频，1080P高清画质'], link: null },
+    
+    { type: 'other', img: '<svg xmlns="http://www.w3.org/2000/svg" width="138" height="20" role="img" aria-label="Data Science: AKShare"><title>Data Science: AKShare</title><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="138" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="81" height="20" fill="#555"/><rect x="81" width="57" height="20" fill="#97ca00"/><rect width="138" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="415" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="710">Data Science</text><text x="415" y="140" transform="scale(.1)" fill="#fff" textLength="710">Data Science</text><text aria-hidden="true" x="1085" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="470">AKShare</text><text x="1085" y="140" transform="scale(.1)" fill="#fff" textLength="470">AKShare</text></g></svg>', title: 'AKShare财经数据API', descs: ['一款免费开源的量化投研数据获取工具'], link: 'https://gitcode.com/gh_mirrors/aks/akshare' },
+    { type: 'other', img: '📖', title: 'TXT文本阅读器', descs: ['用印申请表伪装的TXT文本阅读器'], link: './TxTplayer.html' },
+    { type: 'other', img: '<img src="../src/img/FundDetail.jpg" width="200px" height="150px">', title: '基金数据看板', descs: ['实时展示基金数据与图表'], link: './FundDetail.html' },
+    { type: 'other', img: '📅', title: 'Excel盯盘看板', descs: ['伪装成表格的盯盘工具'], link: './excel.html' }
 ];
 
 const grid = document.getElementById('resource-grid');
