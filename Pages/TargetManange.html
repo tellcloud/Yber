@@ -834,7 +834,7 @@ function openGoalEditor(g){
     return '<button type="button" class="swatch'+(c===G.color?' sel':'')+'" data-color="'+c+'" style="background:'+c+'" aria-label="选择颜色"></button>';
   }).join('');
   openModal(isNew?'新建目标':'编辑目标 · '+esc(g.name),
-    '<label class="fld"><span>目标名称</span><input id="gd-name" maxlength="40" value="'+esc(G.name)+'" placeholder="例如：统计 2026 年成员企业收入明细数据"></label>'+
+    '<label class="fld"><span>目标名称</span><input id="gd-name" maxlength="40" value="'+esc(G.name)+'" placeholder="例如：背完雅思3000个重点单词"></label>'+
     '<div class="fld-row">'+
       '<label class="fld"><span>单位</span><input id="gd-unit" maxlength="6" value="'+esc(G.unit)+'" placeholder="个 / 页 / 节"></label>'+
       '<label class="fld"><span>总量</span><input id="gd-total" type="number" min="1" step="any" value="'+G.total+'"></label>'+
