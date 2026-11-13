@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>鱼缸</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#03131f}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",system-ui,sans-serif;
+    color:#eaf8ff;-webkit-font-smoothing:antialiased;
+  }
+  .tank{
+    position:relative;width:100vw;height:100vh;height:100dvh;
+    overflow:hidden;isolation:isolate;user-select:none;-webkit-user-select:none;
+    touch-action:none;cursor:default;
+  }
+  .tank.feeding{cursor:none}
+  /* 鼠标悬停在鱼身上时的可点击提示 */
+  .tank.over-fish{cursor:pointer}
+  @media (pointer:coarse){.tank.feeding{cursor:default}}
+  .layer{position:absolute;inset:0;pointer-events:none}
+
+  /* ---------- 水体 ---------- */
+  .water{
+    z-index:0;
+    background:
+      radial-gradient(130% 75% at 50% -12%, rgba(150,232,255,.62), rgba(150,232,255,0) 62%),
+      radial-gradient(90% 60% at 12% 8%, rgba(96,206,233,.30), transparent 60%),
+      linear-gradient(180deg,#0f83ac 0%,#0b6792 15%,#084a73 36%,#063054 63%,#041e37 86%,#031627 100%);
+  }
+  .water::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(125% 105% at 50% 38%,transparent 42%,rgba(0,7,20,.58) 100%);
+  }
+  .beams{z-index:1;overflow:hidden;mix-blend-mode:screen}
+  .beam{
+    position:absolute;top:-25%;height:150%;width:13vw;min-width:80px;
+    background:linear-gradient(180deg,rgba(196,244,255,.30),rgba(160,228,255,.07) 55%,transparent 88%);
+    filter:blur(16px);transform:skewX(-16deg);
+    animation:beamPulse 9s ease-in-out infinite alternate;
+  }
+  .beam:nth-child(1){left:8%;animation-duration:8.5s}
+  .beam:nth-child(2){left:31%;width:9vw;opacity:.7;animation-duration:11s;animation-delay:-3s}
+  .beam:nth-child(3){left:56%;width:16vw;opacity:.85;animation-duration:9.8s;animation-delay:-6s}
+  .beam:nth-child(4){left:79%;width:8vw;opacity:.6;animation-duration:12.5s;animation-delay:-2s}
+  @keyframes beamPulse{
+    0%{opacity:.35;transform:skewX(-16deg) translateX(-18px)}
+    50%{opacity:.9}
+    100%{opacity:.5;transform:skewX(-11deg) translateX(26px)}
+  }
+  .caustics{
+    z-index:1;
+    background:
+      repeating-linear-gradient(112deg,rgba(255,255,255,.055) 0 2px,transparent 2px 40px),
+      repeating-linear-gradient(68deg,rgba(255,255,255,.04) 0 2px,transparent 2px 56px);
+    -webkit-mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.35) 45%,transparent 72%);
+    mask-image:linear-gradient(180deg,#000,rgba(0,0,0,.35) 45%,transparent 72%);
+    animation:caustics 13s ease-in-out infinite alternate;
+  }
+  @keyframes caustics{from{transform:translateX(-22px) scale(1)}to{transform:translateX(26px) scale(1.05)}}
+  .surface{
+    z-index:2;top:0;bottom:auto;height:26px;
+    background:
+      radial-gradient(ellipse 46px 13px at 0 0,rgba(226,250,255,.42),transparent 72%) 0 0/88px 26px repeat-x,
+      linear-gradient(180deg,rgba(206,246,255,.38),rgba(206,246,255,0));
+    filter:blur(1px);animation:surfaceMove 9s linear infinite;
+  }
+  @keyframes surfaceMove{to{background-position:88px 0,0 0}}
+
+  /* ---------- 海床与景物 ---------- */
+  .seabed{
+    z-index:2;top:auto;left:-6%;right:-6%;bottom:-3%;height:16%;
+    border-radius:50% 50% 0 0/34px 34px 0 0;
+    background:
+      radial-gradient(circle at 20% 30%,rgba(225,245,235,.13) 0 1px,transparent 2px) 0 0/27px 21px,
+      radial-gradient(circle at 70% 70%,rgba(225,245,235,.09) 0 1px,transparent 2px) 0 0/19px 17px,
+      linear-gradient(180deg,#2b6f70 0%,#1d535c 34%,#123a49 100%);
+    box-shadow:inset 0 14px 42px rgba(0,0,0,.28),0 -8px 30px rgba(0,0,0,.12);
+  }
+  .weed{
+    position:absolute;z-index:2;bottom:9%;left:var(--x);
+    width:var(--w);height:var(--h);transform-origin:50% 100%;
+    opacity:var(--o,.72);filter:blur(.4px) drop-shadow(0 0 8px rgba(62,214,168,.22));
+    animation:sway var(--d) ease-in-out infinite alternate;animation-delay:var(--delay,0s);
+  }
+  @keyframes sway{from{transform:rotate(-7deg) skewX(2deg)}to{transform:rotate(7deg) skewX(-2deg)}}
+  .coral{
+    position:absolute;z-index:2;bottom:10%;width:var(--w);height:var(--h);
+    opacity:.72;filter:drop-shadow(0 4px 12px rgba(0,0,0,.3));
+  }
+  .rock{
+    position:absolute;z-index:2;bottom:7%;width:var(--w);height:var(--h);opacity:.8;
+  }
+
+  /* ---------- 主画布 ---------- */
+  #scene{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+
+  /* ---------- HUD ---------- */
+  .hud{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .glass{
+    background:rgba(5,34,56,.42);border:1px solid rgba(164,226,255,.22);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 8px 30px rgba(0,10,25,.28),inset 0 1px 0 rgba(255,255,255,.09);
+  }
+
+  /* 鱼群计数：独立定位到左上角（PC / 手机均显示） */
+  .count{
+    position:absolute;
+    top:calc(clamp(16px,3vw,30px) + env(safe-area-inset-top,0px));
+    left:calc(clamp(16px,3vw,34px) + env(safe-area-inset-left,0px));
+    padding:11px 14px;border-radius:14px;font-size:12px;letter-spacing:.06em;
+    color:rgba(205,238,252,.82);display:flex;align-items:center;gap:8px;
+  }
+  .count b{font-size:15px;font-weight:600;color:#eafaff;font-variant-numeric:tabular-nums}
+
+  .controls{
+    position:absolute;top:clamp(16px,3vw,30px);right:clamp(16px,3vw,34px);
+    display:flex;align-items:center;gap:10px;pointer-events:auto;
+  }
+  .btn{
+    display:flex;align-items:center;gap:9px;padding:11px 18px;border-radius:14px;
+    color:#eafaff;font:inherit;font-size:13px;font-weight:600;letter-spacing:.06em;
+    cursor:pointer;transition:transform .18s,background .22s,border-color .22s,box-shadow .22s;
+  }
+  .btn:hover{transform:translateY(-2px);background:rgba(12,62,92,.6);border-color:rgba(184,238,255,.45)}
+  .btn:active{transform:translateY(0) scale(.97)}
+  .btn:focus-visible{outline:2px solid #8fe3ff;outline-offset:3px}
+  .btn.active{
+    background:linear-gradient(145deg,rgba(255,183,94,.30),rgba(214,120,60,.20));
+    border-color:rgba(255,206,142,.6);
+    box-shadow:0 8px 30px rgba(255,160,70,.18),inset 0 1px 0 rgba(255,255,255,.16);
+  }
+  .btn svg{flex:none}
+  .hint{
+    position:absolute;bottom:clamp(18px,3.2vw,32px);left:50%;transform:translateX(-50%);
+    padding:9px 18px;border-radius:999px;font-size:12px;letter-spacing:.05em;
+    color:rgba(210,240,252,.75);white-space:nowrap;
+    background:rgba(4,28,47,.34);border:1px solid rgba(164,226,255,.13);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  }
+  .hint kbd{
+    font:inherit;font-size:11px;padding:1px 6px;border-radius:5px;margin:0 2px;
+    border:1px solid rgba(190,232,252,.3);background:rgba(255,255,255,.07);
+  }
+  .gather{
+    position:absolute;bottom:clamp(64px,8vw,88px);left:50%;transform:translate(-50%,10px);
+    width:min(320px,76vw);padding:12px 16px 14px;border-radius:15px;
+    opacity:0;transition:opacity .3s,transform .3s;
+  }
+  .gather.show{opacity:1;transform:translate(-50%,0)}
+  .gather-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.09em;color:rgba(214,242,255,.85)}
+  .gather-top span:last-child{font-variant-numeric:tabular-nums;color:#ffd9a3}
+  .track{margin-top:9px;height:4px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+  #gatherBar{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#6ee7f5,#ffd08a);box-shadow:0 0 12px rgba(255,200,130,.6)}
+  .toast{
+    position:absolute;top:clamp(80px,11vw,108px);left:50%;transform:translate(-50%,-8px);
+    padding:10px 18px;border-radius:12px;font-size:12.5px;letter-spacing:.05em;
+    background:rgba(6,38,60,.72);border:1px solid rgba(180,234,255,.24);
+    color:#eafaff;opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- 鱼信息卡 ---------- */
+  .fish-card{
+    position:absolute;left:0;top:0;z-index:8;
+    padding:11px 15px 12px;border-radius:14px;
+    min-width:136px;max-width:min(280px,78vw);
+    opacity:0;transform:translateY(6px) scale(.985);
+    transition:opacity .22s ease,transform .22s ease;
+    pointer-events:none;
+  }
+  .fish-card.show{opacity:1;transform:none}
+  .fc-head{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;letter-spacing:.04em;color:#eafaff}
+  .fc-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#ffd08a;box-shadow:0 0 10px rgba(255,200,130,.9)}
+  .fc-row{
+    display:flex;justify-content:space-between;gap:14px;margin-top:7px;
+    font-size:11.5px;letter-spacing:.05em;color:rgba(190,226,244,.72);
+  }
+  .fc-row b{font-weight:500;color:#bfeaff;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* ---------- 鱼食袋光标 ---------- */
+  .food-cursor{
+    position:absolute;left:0;top:0;
+    width:176px;height:176px;margin-left:-48px;margin-top:-40px;
+    z-index:9;pointer-events:none;opacity:0;
+    transform-origin:48px 40px;   
+    transition:opacity .18s ease;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));
+    will-change:transform;
+  }
+  .tank.feeding .food-cursor{opacity:1}
+  .food-cursor .bag{
+    animation:bob 2.6s ease-in-out infinite;
+    transform-origin:76px 58px;
+  }
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(3px) rotate(2deg)}}
+  .food-cursor.pour .bag{animation:pour .5s ease-in-out}
+  @keyframes pour{0%{transform:rotate(0)}35%{transform:rotate(-34deg) translate(2px,2px)}70%{transform:rotate(-24deg)}100%{transform:rotate(0)}}
+  .food-cursor .grain{opacity:0}
+  .food-cursor.pour .grain{animation:spill .55s ease-out forwards}
+  .food-cursor.pour .grain:nth-of-type(2){animation-delay:.06s}
+  .food-cursor.pour .grain:nth-of-type(3){animation-delay:.12s}
+  @keyframes spill{0%{opacity:0;transform:translate(0,0) scale(.5)}25%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1)}}
+
+  @media (max-width:640px){
+    /* 鱼群框：手机端保留显示，左上角，尺寸收紧 */
+    .count{padding:8px 11px;font-size:11px;gap:6px;border-radius:12px}
+    .count b{font-size:13px}
+    .btn{padding:10px 13px;font-size:12px;gap:6px}
+    .hint{font-size:11px;padding:8px 13px;white-space:normal;text-align:center;width:max-content;max-width:88vw}
+    .toast{font-size:11.5px;max-width:88vw;white-space:normal;text-align:center}
+    .coral,.rock{opacity:.6}
+    .fish-card{padding:10px 13px 11px;border-radius:13px}
+    .fc-head{font-size:13px}
+    .fc-row{font-size:11px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .beam,.caustics,.surface,.weed,.food-cursor .bag{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="tank" id="tank">
+
+  <div class="layer water"></div>
+  <div class="layer beams"><i class="beam"></i><i class="beam"></i><i class="beam"></i><i class="beam"></i></div>
+  <div class="layer caustics"></div>
+  <div class="layer surface"></div>
+  <div class="layer seabed"></div>
+
+  <!-- 海草（每株独立摆动） -->
+  <svg class="weed" style="--x:3%;--w:76px;--h:190px;--d:6.2s;--delay:-1s;--o:.62" viewBox="0 0 80 160" preserveAspectRatio="none">
+    <defs><linearGradient id="wg1" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#0e6b69"/><stop offset="1" stop-color="#5ce0ab"/></linearGradient></defs>
+    <path d="M40 160 C28 124 50 92 34 50 C28 32 36 14 44 2 C46 28 40 44 46 62 C58 96 46 128 48 160 Z" fill="url(#wg1)"/>
+    <path d="M40 160 C22 132 12 106 14 78 C14 62 20 52 26 46 C24 74 32 98 42 160 Z" fill="url(#wg1)" opacity=".8"/>
+    <path d="M40 160 C58 136 68 112 66 84 C66 68 62 58 56 50 C58 78 52 104 44 160 Z" fill="url(#wg1)" opacity=".85"/>
+  </svg>
+  <svg class="weed" style="--x:11%;--w:58px;--h:140px;--d:7.4s;--delay:-3.4s;--o:.55" viewBox="0 0 80 160" preserveAspectRatio="none">
+    <path d="M40 160 C30 126 48 96 36 56 C30 36 38 18 44 6 C46 32 40 46 46 66 C56 100 46 130 48 160 Z" fill="url(#wg1)"/>
+    <path d="M40 160 C24 134 16 110 18 84 C18 70 22 60 28 54 C26 80 32 104 42 160 Z" fill="url(#wg1)" opacity=".75"/>
+  </svg>
+  <svg class="weed" style="--x:82%;--w:88px;--h:220px;--d:8s;--delay:-2s;--o:.68" viewBox="0 0 80 160" preserveAspectRatio="none">
+    <defs><linearGradient id="wg2" x1="0" y1="1" x2="0" y2="0"><stop stop-color="#0b5b6b"/><stop offset="1" stop-color="#67e8c0"/></linearGradient></defs>
+    <path d="M40 160 C30 122 52 90 36 46 C30 28 38 12 46 2 C46 30 40 44 46 62 C60 98 46 128 48 160 Z" fill="url(#wg2)"/>
+    <path d="M40 160 C20 130 10 104 12 76 C12 60 18 48 24 42 C22 72 30 98 42 160 Z" fill="url(#wg2)" opacity=".8"/>
+    <path d="M40 160 C60 134 70 108 68 80 C68 64 64 54 58 48 C60 78 52 106 44 160 Z" fill="url(#wg2)" opacity=".85"/>
+  </svg>
+  <svg class="weed" style="--x:92%;--w:56px;--h:150px;--d:6.8s;--delay:-4.5s;--o:.5" viewBox="0 0 80 160" preserveAspectRatio="none">
+    <path d="M40 160 C28 128 48 98 36 58 C30 40 38 20 44 8 C46 34 40 48 46 68 C56 102 46 132 48 160 Z" fill="url(#wg2)"/>
+  </svg>
+  <svg class="weed" style="--x:46%;--w:52px;--h:118px;--d:5.6s;--delay:-1.8s;--o:.38" viewBox="0 0 80 160" preserveAspectRatio="none">
+    <path d="M40 160 C30 130 48 100 36 62 C32 46 38 28 44 16 C46 40 40 52 46 70 C56 104 46 132 48 160 Z" fill="url(#wg1)"/>
+  </svg>
+
+  <!-- 珊瑚与礁石 -->
+  <svg class="coral" style="left:16%;--w:150px;--h:150px" viewBox="0 0 150 150">
+    <g stroke="#e08a86" stroke-width="9" stroke-linecap="round" fill="none" opacity=".9">
+      <path d="M75 150 V78"/><path d="M75 108 C55 100 48 84 48 62"/><path d="M75 96 C95 90 102 72 102 50"/>
+      <path d="M48 82 C36 76 32 66 32 54"/><path d="M102 74 C114 68 118 58 118 44"/>
+      <path d="M75 78 C68 66 68 52 70 40"/>
+    </g>
+    <g stroke="#ffb3a0" stroke-width="3" stroke-linecap="round" fill="none" opacity=".55">
+      <path d="M75 140 V84"/><path d="M75 106 C57 98 52 84 52 64"/>
+    </g>
+  </svg>
+  <svg class="coral" style="right:14%;--w:118px;--h:118px" viewBox="0 0 150 150">
+    <g stroke="#e6a36f" stroke-width="9" stroke-linecap="round" fill="none" opacity=".85">
+      <path d="M75 150 V86"/><path d="M75 116 C58 108 52 94 52 76"/><path d="M75 104 C94 98 100 82 100 62"/>
+      <path d="M75 86 C70 72 72 58 76 46"/><path d="M52 92 C42 86 38 76 38 66"/>
+    </g>
+  </svg>
+  <svg class="rock" style="left:29%;--w:160px;--h:66px" viewBox="0 0 160 66">
+    <defs><linearGradient id="rk" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3c6d70"/><stop offset="1" stop-color="#163a48"/></linearGradient></defs>
+    <path d="M2 66 C8 40 30 22 56 26 C74 8 112 12 124 30 C142 32 154 46 158 66 Z" fill="url(#rk)"/>
+  </svg>
+  <svg class="rock" style="right:26%;--w:130px;--h:52px" viewBox="0 0 160 66">
+    <path d="M2 66 C14 44 36 32 62 34 C86 16 120 22 132 38 C146 42 156 52 158 66 Z" fill="url(#rk)"/>
+  </svg>
+
+  <canvas id="scene"></canvas>
+
+  <div class="hud">
+    <!-- 鱼群计数：移到 HUD 顶层并独立定位到左上角 -->
+    <div class="count glass">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8fdcf5" stroke-width="1.6"><path d="M2 12c3-5 8-7 12-7 4 0 7 3 7 7s-3 7-7 7c-4 0-9-2-12-7z"/><path d="M21 12l-5-4v8z"/></svg>
+      鱼群 <b id="fishCount">0</b>
+    </div>
+
+    <div class="controls">
+      <button class="btn glass" id="feedBtn" type="button" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+          <path d="M5 8h14l1.4 12H3.6L5 8z"/><path d="M4 8l2-3h12l2 3"/><path d="M9 12.5h6"/><circle cx="9.5" cy="5" r=".7" fill="currentColor" stroke="none"/><circle cx="14" cy="4.5" r=".6" fill="currentColor" stroke="none"/>
+        </svg>
+        <span id="feedLabel">投喂鱼食</span>
+      </button>
+    </div>
+
+    <div class="gather glass" id="gather">
+      <div class="gather-top"><span>鱼群正在集结</span><span id="gatherText">10.0s</span></div>
+      <div class="track"><div id="gatherBar"></div></div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- 点击鱼后弹出的信息卡 -->
+    <div class="fish-card glass" id="fishCard" role="status" aria-live="polite">
+      <div class="fc-head"><i class="fc-dot"></i><b id="fcName">—</b></div>
+      <div class="fc-row"><span>入缸时间</span><b id="fcTime">—</b></div>
+    </div>
+  </div>
+
+  <!-- 投喂模式下的鱼食袋光标 -->
+  <div class="food-cursor" id="foodCursor" aria-hidden="true">
+    <svg viewBox="-48 -40 176 176" width="176" height="176">
+      <defs>
+        <linearGradient id="bagG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f6d9a6"/><stop offset=".5" stop-color="#e0ae72"/><stop offset="1" stop-color="#b97c45"/>
+        </linearGradient>
+        <linearGradient id="bandG" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a86c3d"/><stop offset="1" stop-color="#75451f"/></linearGradient>
+      </defs>
+      <!-- 投喂准星 -->
+      <circle cx="0" cy="0" r="9" fill="none" stroke="rgba(226,250,255,.9)" stroke-width="1.2" stroke-dasharray="3 3"/>
+      <circle cx="0" cy="0" r="2.2" fill="#eafcff"/>
+      <g class="bag">
+        <!-- 撒出的颗粒 -->
+        <circle class="grain" style="--dx:-14px;--dy:22px" cx="12" cy="14" r="2.6" fill="#c8843f"/>
+        <circle class="grain" style="--dx:-4px;--dy:28px" cx="15" cy="13" r="2.2" fill="#e0a45c"/>
+        <circle class="grain" style="--dx:6px;--dy:20px" cx="18" cy="15" r="2.4" fill="#b97536"/>
+        <!-- 扎口 -->
+        <path d="M14 19 Q40 10 66 19 L62 29 Q40 21 18 29 Z" fill="url(#bandG)"/>
+        <path d="M16 21 Q40 13 64 21" fill="none" stroke="rgba(255,225,180,.5)" stroke-width="1.4"/>
+        <!-- 袋身 -->
+        <path d="M18 27 L62 27 L68 84 Q40 92 12 84 Z" fill="url(#bagG)" stroke="#7c4d28" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M18 27 L24 37 L56 37 L62 27" fill="rgba(255,255,255,.20)"/>
+        <path d="M24 37 L20 80" stroke="rgba(255,255,255,.14)" stroke-width="2" fill="none"/>
+        <!-- 标签 -->
+        <ellipse cx="40" cy="58" rx="18" ry="14.5" fill="#fff5e0" stroke="#b9824a" stroke-width="1.4"/>
+        <path d="M30 58c4-4.5 9.5-4.5 13.5 0-4 4.5-9.5 4.5-13.5 0z" fill="#df9350"/>
+        <path d="M43.5 58l6-4.5v9z" fill="#df9350"/>
+        <circle cx="33.5" cy="56.8" r="1.1" fill="#70421f"/>
+      </g>
+    </svg>
+  </div>
+
+  <script type="application/json" id="fishConfig">
+  {
+    "fish": [
+      {
+        "name": "三角鱼",
+        "src": "../src/fish/fish_triangle.png",
+        "importTime": "2026-11-12 14:00",
+        "count": 1,
+        "length": 120,
+        "width": 84
+      },
+      {
+        "name": "圆鱼",
+        "src": "../src/fish/fish_circle.png",
+        "importTime": "2026-11-12 12:00",
+        "count": 1,
+        "length": 70,
+        "width": 40
+      },
+      {
+        "name": "罗非无敌",
+        "src": "../src/fish/ODL.png",
+        "importTime": "2026-11-12 00:00",
+        "count": 1,
+        "length": 140,
+        "width": 92
+      },
+      {
+        "name": "张罗非",
+        "src": "../src/fish/ODL.png",
+        "importTime": "2026-11-13 16:30",
+        "count": 1,
+        "length": 180,
+        "width": 110
+      },
+      {
+        "name": "哦鲸鲸",
+        "src": "../src/fish/whale.png",
+        "importTime": "2026-11-12 00:00",
+        "count": 1,
+        "length": 400,
+        "width": 100
+      }
+    ]
+  }
+  </script>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var tank=document.getElementById('tank'),
+      canvas=document.getElementById('scene'),
+      ctx=canvas.getContext('2d'),
+      btn=document.getElementById('feedBtn'),
+      btnLabel=document.getElementById('feedLabel'),
+      cursorEl=document.getElementById('foodCursor'),
+      toastEl=document.getElementById('toast'),
+      hintEl=document.getElementById('hint'),
+      gatherEl=document.getElementById('gather'),
+      gatherBar=document.getElementById('gatherBar'),
+      gatherText=document.getElementById('gatherText'),
+      countEl=document.getElementById('fishCount'),
+      cardEl=document.getElementById('fishCard'),
+      fcName=document.getElementById('fcName'),
+      fcTime=document.getElementById('fcTime'),
+      configEl=document.getElementById('fishConfig');
+
+  var TAU=Math.PI*2;
+  var clamp=function(v,a,b){return v<a?a:(v>b?b:v);};
+  var rand=function(a,b){return a+Math.random()*(b-a);};
+  function rgb(hex){var h=hex.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  function rgba(hex,a){var c=rgb(hex);return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';}
+  function lerpAngle(a,b,t){var d=((b-a+Math.PI)%TAU+TAU)%TAU-Math.PI;return a+d*t;}
+  function num(v,def){var n=Number(v);return isFinite(n)?n:def;}
+
+  var W=0,H=0,DPR=1,now=performance.now(),last=now,lastHud=0;
+  var fishes=[],distant=[],bubbles=[],foods=[],ripples=[];
+  var sprites=[];
+  var feeding=false,gather=null,toastTimer=null,cardTimer=null;
+  var mx=-200,my=-200,prevMx=-200,tilt=0,tiltTarget=0;
+
+  function readConfig(){
+    var raw=(configEl?configEl.textContent:'')||'';
+    var cfg=null;
+    try{ cfg=JSON.parse(raw); }
+    catch(e){ console.warn('[OceanTank] #fishConfig JSON 解析失败：',e); cfg=null; }
+    if(!cfg||!Array.isArray(cfg.fish)) cfg={fish:[]};
+    return cfg;
+  }
+  var fishConfig=readConfig();
+
+  function loadImage(src){
+    return new Promise(function(resolve){
+      if(!src){ resolve(null); return; }
+      var im=new Image();
+      im.onload=function(){ resolve(im); };
+      im.onerror=function(){
+        console.warn('[OceanTank] 无法加载鱼图 "'+src+'"（检查路径/文件名），已跳过。');
+        resolve(null);
+      };
+      im.src=src;
+    });
+  }
+
+  function loadFishSources(cfg){
+    var list=(cfg&&cfg.fish)||[];
+    return Promise.all(list.map(function(item){
+      return loadImage(item&&item.src).then(function(im){
+        return im?{img:im,cfg:item}:null;
+      });
+    })).then(function(arr){ return arr.filter(Boolean); });
+  }
+
+  function buildSprites(entries){
+    var out=[];
+    (entries||[]).forEach(function(entry){
+      var srcEl=(entry&&entry.img)?entry.img:entry;
+      var item=(entry&&entry.cfg)||{};
+      if(!srcEl) return;
+
+      var nw=srcEl.naturalWidth||srcEl.width||0;
+      var nh=srcEl.naturalHeight||srcEl.height||0;
+      if(!nw||!nh) return;
+
+      var base=document.createElement('canvas');
+      base.width=nw;base.height=nh;
+      var bc=base.getContext('2d');
+      try{ bc.drawImage(srcEl,0,0); }catch(e){ return; }
+
+      var sx=0,sy=0,cw=nw,ch=nh;
+
+      try{
+        var id=bc.getImageData(0,0,nw,nh), dd=id.data;
+        var opaque=0,clear=0;
+        for(var k=0;k<dd.length;k+=4){
+          if(dd[k+3]<=10) clear++; else opaque++;
+        }
+        var hasAlpha=(opaque>0)&&(clear/opaque>0.02);
+
+        if(!hasAlpha){
+          for(var k2=0;k2<dd.length;k2+=4){
+            var lum=dd[k2]*0.299+dd[k2+1]*0.587+dd[k2+2]*0.114;
+            dd[k2+3]=Math.round(clamp(255-lum,0,255));
+          }
+          bc.putImageData(id,0,0);
+        }
+
+        var minX=nw,minY=nh,maxX=-1,maxY=-1;
+        for(var y=0;y<nh;y++){
+          var row=y*nw;
+          for(var x=0;x<nw;x++){
+            if(dd[(row+x)*4+3]<=10) continue;
+            if(x<minX)minX=x;
+            if(x>maxX)maxX=x;
+            if(y<minY)minY=y;
+            if(y>maxY)maxY=y;
+          }
+        }
+        if(maxX>=0){ sx=minX;sy=minY;cw=maxX-minX+1;ch=maxY-minY+1; }
+      }catch(err){
+        sx=0;sy=0;cw=nw;ch=nh;
+      }
+
+      var cv=document.createElement('canvas');
+      cv.width=cw;cv.height=ch;
+      var cc=cv.getContext('2d');
+      cc.drawImage(base,sx,sy,cw,ch,0,0,cw,ch);
+
+      var glow='#8fdcf5';
+      try{
+        var id2=cc.getImageData(0,0,cw,ch),d2=id2.data;
+        var sr=0,sg=0,sb=0,n=0;
+        for(var k3=0;k3<d2.length;k3+=4){
+          if(d2[k3+3]<40) continue;
+          sr+=d2[k3];sg+=d2[k3+1];sb+=d2[k3+2];n++;
+        }
+        if(n>0){
+          glow='#'+[sr/n,sg/n,sb/n].map(function(v){
+            v=Math.round(clamp(v*1.18,0,255));
+            return ('0'+v.toString(16)).slice(-2);
+          }).join('');
+        }
+      }catch(e){}
+
+      var L=num(item.length,0);
+      if(!(L>0)) L=clamp(Math.round(cw*0.35),80,170);
+      var Wd=num(item.width,0);
+      if(!(Wd>0)) Wd=Math.round(L*(ch/cw));
+
+      var cnt=(item.count===undefined||item.count===null)?2:Math.round(num(item.count,2));
+      cnt=clamp(cnt,0,40);
+
+      out.push({
+        cv:cv,
+        ar:ch/cw,
+        glow:glow,
+        name:item.name||'未命名鱼',
+        src:item.src||'',
+        importTime:item.importTime||'',
+        count:cnt,
+        length:L,
+        width:Wd
+      });
+    });
+    return out;
+  }
+
+  function makeBubble(init,x,y){
+    return {
+      x:x!==undefined?x:rand(0,W),
+      y:y!==undefined?y:(init?rand(0,H):H+12),
+      r:rand(1.4,5.4),v:rand(13,36),sway:rand(0,TAU),sw:rand(.7,1.9),a:rand(.18,.5)
+    };
+  }
+  function makeFish(i,si){
+    var spr=sprites[si]||null;
+    var heading=rand(0,TAU);
+    return {
+      x:rand(60,Math.max(80,W-60)),y:rand(70,Math.max(110,H-100)),
+      vx:Math.cos(heading)*26,vy:Math.sin(heading)*16,
+      heading:heading,flip:Math.cos(heading)>=0?-1:1,pitch:0,
+      spriteIdx:si,
+      len:spr?spr.length:100,
+      ht:spr?spr.width:60,
+      seed:rand(0,100),phase:rand(0,12),cruise:rand(21,40),
+      food:null,arrived:false,orbit:0,orbitR:40,dir:Math.random()<.5?-1:1,
+      deadline:0,tx:0,ty:0,eat:0,sel:0
+    };
+  }
+  function initDistant(){
+    distant=[];
+    if(!sprites.length) return;
+    var n=Math.round(clamp(W/170,4,10));
+    for(var i=0;i<n;i++){
+      distant.push({
+        x:rand(0,W),y:rand(H*.12,H*.78),
+        vx:rand(9,23)*(Math.random()<.5?-1:1),
+        len:rand(36,66),
+        spriteIdx:i%sprites.length
+      });
+    }
+  }
+  function resize(){
+    var r=tank.getBoundingClientRect(),oldW=W,oldH=H;
+    W=r.width;H=r.height;
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    if(oldW>0&&oldH>0){
+      var sx=W/oldW,sy=H/oldH;
+      fishes.forEach(function(f){f.x*=sx;f.y*=sy;});
+      distant.forEach(function(d){d.x*=sx;d.y*=sy;});
+      foods.forEach(function(f){f.x*=sx;f.y*=sy;f.grains.forEach(function(g){g.x*=sx;g.y*=sy;});});
+      bubbles.forEach(function(b){b.x*=sx;b.y*=sy;});
+    }
+    hideFishCard();
+  }
+
+  function spawnFish(){
+    fishes=[];
+    sprites.forEach(function(spr,si){
+      var n=clamp(Math.round(spr.count),0,40);
+      for(var i=0;i<n;i++) fishes.push(makeFish(fishes.length,si));
+    });
+    if(fishes.length>80) fishes.length=80;
+    countEl.textContent=String(fishes.length);
+  }
+
+  /* ---------- 点击鱼 → 显示名字与入缸时间 ---------- */
+
+  // 命中检测：把鼠标点逆变换到鱼的局部坐标，按椭圆判定
+  function pickFish(px,py){
+    var best=null,bestD=Infinity;
+    for(var i=fishes.length-1;i>=0;i--){
+      var f=fishes[i];
+      if(!sprites[f.spriteIdx]) continue;
+      var hw=Math.max(7,f.len*.5), hh=Math.max(6,f.ht*.5);
+      var dx=px-f.x, dy=py-f.y;
+      var c=Math.cos(f.pitch||0), s=Math.sin(f.pitch||0);
+      var lx= dx*c+dy*s;
+      var ly=-dx*s+dy*c;
+      var nx=lx/hw, ny=ly/hh;
+      var d=nx*nx+ny*ny;
+      if(d<=1&&d<bestD){bestD=d;best=f;}
+    }
+    return best;
+  }
+
+  function hideFishCard(){
+    if(cardEl) cardEl.classList.remove('show');
+    clearTimeout(cardTimer);
+  }
+
+  function showFishCard(f,px,py){
+    var spr=sprites[f.spriteIdx];
+    if(!spr||!cardEl) return;
+    f.sel=now;
+
+    fcName.textContent=spr.name||'未命名鱼';
+    fcTime.textContent=spr.importTime||'未知';
+    cardEl.classList.add('show');
+
+    var cw=cardEl.offsetWidth||160, chh=cardEl.offsetHeight||64, pad=10;
+    var x=px+18, y=py-chh-16;
+    if(x+cw>W-pad) x=px-cw-18;          // 右侧空间不足则放到左侧
+    if(x<pad) x=pad;
+    if(y<pad) y=py+20;                  // 上方空间不足则放到下方
+    if(y+chh>H-pad) y=H-pad-chh;
+    if(y<pad) y=pad;
+    cardEl.style.left=Math.round(x)+'px';
+    cardEl.style.top=Math.round(y)+'px';
+
+    clearTimeout(cardTimer);
+    cardTimer=setTimeout(hideFishCard,4200);   // 4.2 秒后自动隐藏
+  }
+
+  function feedAt(px,py){
+    if(!fishes.length) return;
+    var x=clamp(px,16,W-16),y=clamp(py,16,H-16);
+    var food={x:x,y:y,born:now,active:true,grains:[]};
+    for(var i=0;i<22;i++){
+      food.grains.push({x:x+rand(-15,15),y:y+rand(-9,9),vx:rand(-18,18),vy:rand(3,11),r:rand(1.6,3.2)});
+    }
+    foods.push(food);
+    if(foods.length>3){foods[0].active=false;foods.shift();}
+    ripples.push({x:x,y:y,r:5,a:.9});
+
+    fishes.forEach(function(f,i){
+      var a=(i/fishes.length)*TAU+rand(-.2,.2);
+      var rr=rand(70,130);
+      f.food=food;
+      f.tx=clamp(x+Math.cos(a)*rr,44,W-44);
+      f.ty=clamp(y+Math.sin(a)*rr,52,H-74);
+      f.arrived=false;
+      f.orbit=a;f.orbitR=rr;f.dir=Math.random()<.5?-1:1;
+      f.deadline=now+rand(5600,9200);
+    });
+    for(var b=0;b<5;b++)bubbles.push(makeBubble(false,x+rand(-14,14),y+rand(0,10)));
+    gather={start:now,duration:10000,done:false,doneAt:0};
+    showToast('鱼食已撒下 · 鱼群将在 10 秒内集结');
+    cursorEl.classList.remove('pour');void cursorEl.offsetWidth;cursorEl.classList.add('pour');
+  }
+  function showToast(msg){
+    toastEl.textContent=msg;toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(function(){toastEl.classList.remove('show');},2600);
+  }
+  function setFeeding(v){
+    feeding=v;
+    tank.classList.toggle('feeding',v);
+    btn.classList.toggle('active',v);
+    btn.setAttribute('aria-pressed',v?'true':'false');
+    btnLabel.textContent=v?'结束投喂':'投喂鱼食';
+    if(v){ tank.classList.remove('over-fish'); hideFishCard(); }
+    if(hintEl){
+      hintEl.innerHTML=v
+        ?'左键点击水中任意位置撒下鱼食 · <kbd>Esc</kbd> 或右键结束'
+        :'点击任意一条鱼，查看它的名字与入缸时间';
+    }
+    if(!v)cursorEl.classList.remove('pour');
+  }
+
+  function separation(f){
+    var sx=0,sy=0;
+    for(var i=0;i<fishes.length;i++){
+      var o=fishes[i];if(o===f)continue;
+      var dx=f.x-o.x,dy=f.y-o.y,d=Math.sqrt(dx*dx+dy*dy);
+      var min=(f.len+o.len)*.32;
+      if(d>0.001&&d<min){var k=(min-d)/min;sx+=dx/d*k;sy+=dy/d*k;}
+    }
+    return [sx,sy];
+  }
+  function updateFish(f,dt){
+    var active=f.food&&f.food.active&&(now-f.food.born)<14000;
+    if(active){
+      var food=f.food,tx=f.tx,ty=f.ty,orbiting=false;
+      if(f.arrived){
+        f.orbit+=f.dir*dt*.9;
+        tx=food.x+Math.cos(f.orbit)*f.orbitR;
+        ty=food.y+Math.sin(f.orbit)*f.orbitR*.62;
+        orbiting=true;
+      }
+      var dx=tx-f.x,dy=ty-f.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      var speed;
+      if(orbiting){speed=clamp(d*1.9,14,56);}
+      else{
+        var tl=Math.max(.35,(f.deadline-now)/1000);
+        speed=clamp(d/tl*1.45,42,330);
+      }
+      var sep=separation(f),force=f.arrived?78:12;
+      var dvx=dx/d*speed+sep[0]*force,dvy=dy/d*speed+sep[1]*force;
+      var k=Math.min(1,dt*(orbiting?2.7:3.8));
+      f.vx+=(dvx-f.vx)*k;f.vy+=(dvy-f.vy)*k;
+      if(!f.arrived){
+        var fd=Math.sqrt(Math.pow(food.x-f.x,2)+Math.pow(food.y-f.y,2));
+        if(fd<100)f.arrived=true;
+        var left=(f.deadline-now)/1000;
+        if(left<.35&&fd>102){
+          f.x+=(food.x-f.x)*Math.min(1,dt*13);
+          f.y+=(food.y-f.y)*Math.min(1,dt*13);
+        }
+      }
+    }else{
+      if(f.food){f.food=null;f.heading=Math.atan2(f.vy,f.vx||.001);}
+      f.phase+=dt*.6;
+      var wander=Math.sin(f.phase*.9+f.seed)*.55+Math.sin(f.phase*1.83+f.seed*2.3)*.3;
+      f.heading+=wander*dt*.95;
+      var m=clamp(W*.08,60,110),th=f.heading;
+      if(f.x<m)th=lerpAngle(th,0,.16);
+      else if(f.x>W-m)th=lerpAngle(th,Math.PI,.16);
+      if(f.y<m*.8)th=lerpAngle(th,Math.PI/2,.18);
+      else if(f.y>H-72)th=lerpAngle(th,-Math.PI/2,.18);
+      f.heading=lerpAngle(f.heading,th,Math.min(1,dt*2.4));
+      var s2=separation(f);
+      var dvx2=Math.cos(f.heading)*f.cruise+s2[0]*20;
+      var dvy2=Math.sin(f.heading)*f.cruise*.66+s2[1]*20;
+      var k2=Math.min(1,dt*1.9);
+      f.vx+=(dvx2-f.vx)*k2;f.vy+=(dvy2-f.vy)*k2;
+    }
+    f.x+=f.vx*dt;f.y+=f.vy*dt;
+    if(f.x<28){f.x=28;f.vx=Math.abs(f.vx);f.heading=0;}
+    if(f.x>W-28){f.x=W-28;f.vx=-Math.abs(f.vx);f.heading=Math.PI;}
+    if(f.y<44){f.y=44;f.vy=Math.abs(f.vy);}
+    if(f.y>H-42){f.y=H-42;f.vy=-Math.abs(f.vy);}
+    var targetFlip=f.vx>=0?-1:1;
+    f.flip+=(targetFlip-f.flip)*Math.min(1,dt*8.5);
+    var pitch=Math.atan2(f.vy,Math.abs(f.vx)+1)*(-f.flip);
+    f.pitch+=(pitch-f.pitch)*Math.min(1,dt*6);
+  }
+
+  function drawFish(f,t){
+    var spr=sprites[f.spriteIdx];
+    if(!spr) return;
+    var w=f.len,h=f.ht;
+    var glow=spr.glow||'#8fdcf5';
+    ctx.save();
+    ctx.translate(f.x,f.y);
+
+    // 选中高亮：脉动虚线椭圆 + 柔光
+    if(f.sel&&now-f.sel<5200){
+      var a=1-(now-f.sel)/5200;
+      var pulse=1+.035*Math.sin(now*.006);
+      ctx.save();
+      ctx.globalAlpha=a*.9;
+      ctx.strokeStyle='rgba(255,214,150,.95)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([6,6]);
+      ctx.lineDashOffset=-now*.02;
+      ctx.beginPath();
+      ctx.ellipse(0,0,w*.56*pulse,h*.72*pulse,0,0,TAU);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha=a*.35;
+      ctx.fillStyle='rgba(255,214,150,.18)';
+      ctx.beginPath();
+      ctx.ellipse(0,0,w*.56*pulse,h*.72*pulse,0,0,TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.rotate(f.pitch+Math.sin(t*7+f.seed)*.03);
+    ctx.scale(f.flip,1+Math.sin(t*9+f.seed)*.02);
+    var g=ctx.createRadialGradient(0,0,2,0,0,w*.52);
+    g.addColorStop(0,rgba(glow,.22));g.addColorStop(1,rgba(glow,0));
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,w*.52,h*.9,0,0,TAU);ctx.fill();
+
+    ctx.shadowColor=rgba(glow,.9);ctx.shadowBlur=Math.max(8,w*.13);
+    ctx.drawImage(spr.cv,-w/2,-h/2,w,h);
+    ctx.shadowBlur=0;
+    ctx.restore();
+  }
+  function drawDistant(dt){
+    if(!sprites.length)return;
+    ctx.save();ctx.globalAlpha=.13;
+    for(var i=0;i<distant.length;i++){
+      var d=distant[i];d.x+=d.vx*dt;
+      if(d.x>W+90)d.x=-90;if(d.x<-90)d.x=W+90;
+      var spr=sprites[d.spriteIdx%sprites.length];
+      if(!spr)continue;
+      var w=d.len,h=w*spr.ar;
+      ctx.save();ctx.translate(d.x,d.y+Math.sin(now*.001+d.x*.01)*5);ctx.scale(d.vx>=0?-1:1,1);
+      ctx.drawImage(spr.cv,-w/2,-h/2,w,h);ctx.restore();
+    }
+    ctx.restore();
+  }
+  function drawBubbles(dt){
+    for(var i=0;i<bubbles.length;i++){
+      var b=bubbles[i];
+      b.y-=b.v*dt;
+      b.x+=Math.sin(now*.001*b.sw+b.sway)*9*dt;
+      if(b.y<-14){bubbles[i]=makeBubble(false);continue;}
+      ctx.globalAlpha=b.a;
+      ctx.strokeStyle='rgba(205,245,255,.85)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.stroke();
+      ctx.fillStyle='rgba(255,255,255,.5)';
+      ctx.beginPath();ctx.arc(b.x-b.r*.32,b.y-b.r*.32,Math.max(.6,b.r*.24),0,TAU);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    while(bubbles.length>120)bubbles.shift();
+  }
+  function drawFoods(dt){
+    for(var i=foods.length-1;i>=0;i--){
+      var food=foods[i],age=now-food.born;
+      if(age>17000){food.active=false;foods.splice(i,1);continue;}
+      var glow=clamp(1-age/9000,0,1)*.3;
+      if(glow>0){
+        var rg=ctx.createRadialGradient(food.x,food.y,0,food.x,food.y,95);
+        rg.addColorStop(0,rgba('#ffd28a',glow));rg.addColorStop(1,rgba('#ffd28a',0));
+        ctx.fillStyle=rg;ctx.beginPath();ctx.arc(food.x,food.y,95,0,TAU);ctx.fill();
+      }
+      var fade=clamp(1-(age-13500)/2500,0,1);
+      food.grains=food.grains.filter(function(g){
+        g.vy=Math.min(9,g.vy+2.2*dt);g.vx*=.985;
+        g.x+=g.vx*dt+Math.sin(now*.002+g.y*.08)*3*dt;
+        g.y+=g.vy*dt;
+        if(g.y>H-32){g.y=H-32;g.vy=0;g.vx*=.8;}
+        for(var j=0;j<fishes.length;j++){
+          var f=fishes[j];
+          if(f.arrived&&f.food===food&&Math.abs(f.x-g.x)<24&&Math.abs(f.y-g.y)<24){
+            f.eat++;
+            if(Math.random()<.6)bubbles.push(makeBubble(false,g.x,g.y));
+            return false;
+          }
+        }
+        ctx.globalAlpha=fade*.95;
+        ctx.fillStyle='#f7c67c';ctx.beginPath();ctx.arc(g.x,g.y,g.r,0,TAU);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,.55)';
+        ctx.beginPath();ctx.arc(g.x-.6,g.y-.6,g.r*.35,0,TAU);ctx.fill();
+        return true;
+      });
+      ctx.globalAlpha=1;
+    }
+    for(var r=ripples.length-1;r>=0;r--){
+      var rp=ripples[r];rp.r+=78*dt;rp.a-=dt*1.15;
+      if(rp.a<=0){ripples.splice(r,1);continue;}
+      ctx.strokeStyle=rgba('#ffe3b0',rp.a*.75);ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.ellipse(rp.x,rp.y,rp.r,rp.r*.45,0,0,TAU);ctx.stroke();
+    }
+  }
+  function updateHUD(t){
+    if(t-lastHud<80)return;lastHud=t;
+    if(!gather)return;
+    var e=t-gather.start,p=clamp(e/gather.duration,0,1);
+    gatherEl.classList.add('show');
+    gatherBar.style.width=(p*100).toFixed(1)+'%';
+    if(p<1){gatherText.textContent=Math.max(0,(gather.duration-e)/1000).toFixed(1)+'s';}
+    else{
+      gatherText.textContent='已就位';
+      if(!gather.done){gather.done=true;gather.doneAt=t;}
+      if(t-gather.doneAt>1800){gather=null;gatherEl.classList.remove('show');}
+    }
+  }
+  function frame(t){
+    now=t;
+    var dt=Math.min(.05,(t-last)/1000||0);last=t;
+    ctx.clearRect(0,0,W,H);
+    drawDistant(dt);
+    drawBubbles(dt);
+    drawFoods(dt);
+    for(var i=0;i<fishes.length;i++){updateFish(fishes[i],dt);}
+    for(var j=0;j<fishes.length;j++){drawFish(fishes[j],t/1000);}
+    updateHUD(t);
+    tilt+=(tiltTarget-tilt)*Math.min(1,dt*9);tiltTarget*=.88;
+    if(feeding)cursorEl.style.transform='translate3d('+mx+'px,'+my+'px,0) rotate('+tilt.toFixed(2)+'deg)';
+    requestAnimationFrame(frame);
+  }
+
+  btn.addEventListener('click',function(){setFeeding(!feeding);});
+
+  tank.addEventListener('pointermove',function(e){
+    mx=e.clientX;my=e.clientY;
+    tiltTarget=clamp((mx-prevMx)*1.1,-20,20);prevMx=mx;
+    if(feeding){ tank.classList.remove('over-fish'); return; }
+    // 悬停在鱼身上时给出可点击的光标提示
+    tank.classList.toggle('over-fish', !!pickFish(mx,my));
+  });
+  tank.addEventListener('pointerleave',function(){
+    tank.classList.remove('over-fish');
+  });
+  tank.addEventListener('pointerdown',function(e){
+    if(e.button!==0)return;
+    if(e.target.closest&&e.target.closest('.btn'))return;
+    mx=e.clientX;my=e.clientY;
+    if(feeding){ feedAt(e.clientX,e.clientY); return; }
+
+    // 投喂模式之外：点击鱼显示名字与入缸时间
+    var hit=pickFish(e.clientX,e.clientY);
+    if(hit){ showFishCard(hit,e.clientX,e.clientY); }
+    else{ hideFishCard(); }
+  });
+  tank.addEventListener('contextmenu',function(e){
+    if(feeding){e.preventDefault();setFeeding(false);showToast('已结束投喂');}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){
+      if(feeding)setFeeding(false);
+      hideFishCard();
+    }
+  });
+  window.addEventListener('resize',function(){resize();});
+
+  function start(){
+    resize();
+    loadFishSources(fishConfig).then(function(entries){
+      sprites=buildSprites(entries);
+
+      if(!sprites.length){
+        countEl.textContent='0';
+        console.warn('[OceanTank] 没有任何可用鱼图，请检查 #fishConfig 里的 src。');
+        showToast('未找到鱼图，请检查 JSON 配置');
+        last=performance.now();
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      spawnFish();
+      initDistant();
+      bubbles=[];
+      for(var b=0;b<42;b++)bubbles.push(makeBubble(true));
+      last=performance.now();
+      requestAnimationFrame(frame);
+    });
+  }
+  start();
+})();
+</script>
+</body>
+</html>
